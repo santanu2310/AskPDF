@@ -1,0 +1,22 @@
+[project]
+name = "rag-backend"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "alembic>=1.16.4",
+    "asyncpg>=0.30.0",
+    "chromadb>=1.0.17",
+    "fastapi[standard]>=0.116.0",
+    "google-api-python-client>=2.179.0",
+    "google-auth-oauthlib>=1.2.2",
+    "psycopg2-binary>=2.9.10",
+    "pydantic-settings>=2.10.1",
+    "pyjwt>=2.10.1",
+    "pypdf>=5.7.0",
+    "python-docx>=1.2.0",
+    "sentence-transformers>=5.1.0",
+    "sqlalchemy>=2.0.43",
+    "uvicorn>=0.35.0",
+]
