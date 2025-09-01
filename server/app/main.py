@@ -9,6 +9,8 @@ from app.core.document_loader import load_documents
 from app.core.embedder import Embedder
 from app.core.vector_store import VectorStore
 
+from app.exception_handler import add_exception_handlers
+
 if __name__ == "__main__":
     chunks = load_documents("data")
     texts = [chunk["text"] for chunk in chunks]
@@ -43,7 +45,7 @@ async def lifespan(app: FastAPI):
 def create_app() -> FastAPI:
     app = FastAPI(lifespan=lifespan)
 
-    origins = ["*"]
+    origins = ["http://localhost:5174"]
 
     app.include_router(router=router)
 
@@ -54,6 +56,8 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    add_exception_handlers(app)
 
     return app
 

@@ -16,10 +16,11 @@ class Settings(BaseSettings):
     GOOGLE_OAUTH2_CLIENT_ID: str = ""
     GOOGLE_OAUTH2_CLIENT_SECRET: str = ""
     GOOGLE_OAUTH2_PROJECT_ID: str = ""
-    GOOGLE_OAUTH_REDIRECT_URI: str = "https://oauth.pstmn.io/v1/callback"
+    GOOGLE_OAUTH_REDIRECT_URI: str = "http://localhost:5174/auth/callback"
 
     # JWT Configuration
-    JWT_SECRET_KEY: str = "your-secret-key-here"
+    JWT_ACCESS_SECRET_KEY: str = ""
+    JWT_REFRESH_SECRET_KEY: str = ""
     JWT_ALGORITHM: str = "HS256"
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     JWT_REFRESH_TOKEN_EXPIRE_DAYS: int = 7
