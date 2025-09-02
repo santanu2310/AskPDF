@@ -25,6 +25,11 @@ class Settings(BaseSettings):
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     JWT_REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
+    # S3 Credentials
+    AWS_ACCESS_KEY: str = ""
+    AWS_SECRET_KEY: str = ""
+    BUCKET_NAME: str = ""
+
     # DB Configuration
     POSTGRES_USER: str = "devuser"
     POSTGRES_PWD: str = "devpass"

@@ -1,6 +1,6 @@
 import jwt
 import logging
-from typing import Annotated
+from typing import Annotated, Optional
 from fastapi import HTTPException, status, Cookie
 from app.core.config import settings
 from app.core.schemas import UserAuthOut
@@ -51,6 +51,14 @@ async def get_id_from_access_token(
     refresh_token: Annotated[str, Cookie(alias="access_token")],
 ) -> UserAuthOut:
     return decode_token(refresh_token, settings.JWT_ACCESS_SECRET_KEY)
+
+
+async def get_optional_user_from_access_token(
+    access_token: Optional[str] = Cookie(default=None, alias="access_token"),
+) -> Optional[UserAuthOut]:
+    if not access_token:
+        return None  # guest user (no cookie)
+    return decode_token(access_token, settings.JWT_ACCESS_SECRET_KEY)
 
 
 async def get_id_from_refresh_token(

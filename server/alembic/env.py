@@ -1,16 +1,16 @@
 from logging.config import fileConfig
 
 from alembic import context
-from app.core.model import Base
+from app.core.models import Base
 from sqlalchemy import engine_from_config, pool
 
 from app.api.user.models import User  # noqa: F401
 from app.api.conversation.models import (
-    Conversation,
-    Document,
-    Message,
-    TempDocument,
-)  # noqa: F401
+    Conversation,  # noqa: F401
+    Document,  # noqa: F401
+    Message,  # noqa: F401
+    TempDocument,  # noqa: F401
+)
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

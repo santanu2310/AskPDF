@@ -7,6 +7,7 @@ from app.core.exceptions import (
     InvalidOAuthCodeError,
     AuthenticationError,
     DatabaseError,
+    S3ServiceError,
 )
 
 
@@ -28,6 +29,10 @@ async def invalid_oauth_handler(request: Request, exc: InvalidOAuthCodeError):
     )
 
 
+async def s3_service_error_handler(request: Request, exc: S3ServiceError):
+    return JSONResponse(status_code=400, content={"detail": str(exc)})
+
+
 async def authentication_error_handler(request: Request, exc: AuthenticationError):
     return JSONResponse(status_code=401, content={"detail": "Authentication failed"})
 
@@ -38,3 +43,4 @@ def add_exception_handlers(app: FastAPI) -> None:
     app.add_exception_handler(InvalidOAuthCodeError, invalid_oauth_handler)
     app.add_exception_handler(AuthenticationError, authentication_error_handler)
     app.add_exception_handler(DatabaseError, database_error_handler)
+    app.add_exception_handler(S3ServiceError, s3_service_error_handler)
