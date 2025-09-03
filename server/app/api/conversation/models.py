@@ -15,7 +15,7 @@ class Document(BaseModel):
         ForeignKey("users.id", ondelete="SET NULL"), nullable=False
     )
     conversation_id: Mapped[Optional[int]] = mapped_column(
-        ForeignKey("conversations.id", ondelete="CASCADE"), nullable=False
+        ForeignKey("conversations.id", ondelete="CASCADE"), nullable=True
     )
 
     # Relationships
