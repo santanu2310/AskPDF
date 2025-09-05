@@ -1,4 +1,4 @@
-import uuid
+# import uuid
 import logging
 import boto3
 from botocore.config import Config
@@ -12,13 +12,14 @@ from .schemas import UploadSession
 logger = logging.getLogger(__name__)
 
 
-def create_presigned_upload_url(temp: bool = True) -> UploadSession:
+def create_presigned_upload_url(key: str, doc_id: str) -> UploadSession:
     conditions = [
         ["content-length-range", 0, 20971520],  # 20 MB limit
+        {"x-amz-meta-doc-id": doc_id},
     ]
 
-    unique_id = str(uuid.uuid4())
-    key = f"temp/{unique_id}" if temp else f"docs/{unique_id}"
+    # unique_id = str(uuid.uuid4()) + "-" + file_name.strip().replace(" ", "_").lower()
+    # key = f"temp/{unique_id}" if temp else f"docs/{unique_id}"
 
     # Generate a presigned S3 POST URL
     s3_client = boto3.client(
@@ -33,6 +34,7 @@ def create_presigned_upload_url(temp: bool = True) -> UploadSession:
         response = s3_client.generate_presigned_post(
             settings.BUCKET_NAME,
             key,
+            Fields={"x-amz-meta-doc-id": doc_id},
             Conditions=conditions,
             ExpiresIn=360,
         )

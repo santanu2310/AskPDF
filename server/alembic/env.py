@@ -7,8 +7,10 @@ from sqlalchemy import engine_from_config, pool
 from app.api.user.models import User  # noqa: F401
 from app.api.conversation.models import (
     Conversation,  # noqa: F401
-    Document,  # noqa: F401
     Message,  # noqa: F401
+)
+from app.api.document.models import (
+    Document,  # noqa: F401
     TempDocument,  # noqa: F401
 )
 
