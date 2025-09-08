@@ -1,6 +1,6 @@
 --extra-index-url https://download.pytorch.org/whl/cpu
-boto3==1.40.21
-botocore==1.40.21
+# boto3==1.40.21
+# botocore==1.40.21
 chromadb-client==1.0.20
 numpy==2.3.2
 pypdf==6.0.0
