@@ -1,5 +1,4 @@
 --extra-index-url https://download.pytorch.org/whl/cpu
-# test
 # boto3==1.40.21
 # botocore==1.40.21
 chromadb-client==1.0.20
