@@ -72,5 +72,9 @@ jobs:
           #   MY_BUILD_ARG=value
           #   ANOTHER_ARG=another_value
 
-      - name: Output Image URL
-        run: echo "Image pushed to ${{ steps.build-image.outputs.digest }}"
+      - name: Deploy Lambda Function
+        uses: aws-actions/aws-lambda-deploy@v1
+        with:
+          function-name: docsToVectors
+          package-type: Image
+          image-uri: ${{ steps.build-image.outputs.image }}
