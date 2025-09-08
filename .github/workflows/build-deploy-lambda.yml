@@ -56,20 +56,17 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Echo ECR Repository Name
-        run: echo "Repository name from secret is ${{ secrets.ECR_PUBLIC_REPOSITORY }}"
-
       - name: Build, tag, and push image to Amazon ECR Public
         id: build-image
         uses: docker/build-push-action@v5
         with:
-          context: ./server/lambda/functions/process_file
+          context: ./server/lambda/functions/
           # A boolean to indicate if the image should be pushed.
           push: true
           # Define the tags for the image. We use the git SHA for a unique identifier and 'latest'.
           tags: |
-            ${{ env.ECR_REGISTRY }}/santanu/askpdf:${{ github.sha }}
-            ${{ env.ECR_REGISTRY }}/santanu/askpdf:latest
+            ${{ env.ECR_REGISTRY }}/${{ secrets.ECR_PUBLIC_REPOSITORY }}:${{ github.sha }}
+            ${{ env.ECR_REGISTRY }}/${{ secrets.ECR_PUBLIC_REPOSITORY }}:latest
           # Add build arguments if needed, for example:
           # build-args: |
           #   MY_BUILD_ARG=value
