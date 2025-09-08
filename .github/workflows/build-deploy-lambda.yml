@@ -1,0 +1,76 @@
+# This GitHub Action workflow builds a Docker image and pushes it to a public AWS Elastic Container Registry (ECR).
+#
+# Workflow triggers on a push to the 'main' branch.
+#
+# Prerequisites:
+# 1. An AWS ECR Public repository must exist.
+# 2. An AWS IAM Role with permissions to push to ECR Public, configured with a trust relationship for GitHub's OIDC provider.
+# 3. The following secrets must be configured in your GitHub repository settings:
+#    - AWS_REGION: The AWS region of your ECR repository (e.g., us-east-1). Note: ECR Public is always in us-east-1.
+#    - AWS_ROLE_TO_ASSUME_ARN: The ARN of the IAM role that GitHub Actions will assume.
+#    - ECR_PUBLIC_REPOSITORY: The name of your AWS ECR Public repository.
+
+name: Build and Push to AWS ECR Public
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - "server/lambda/**"
+# Environment variables available to all jobs and steps in this workflow.
+env:
+  # The ECR Public registry is always in the us-east-1 region.
+  AWS_REGION: us-east-1
+  ECR_REGISTRY: public.ecr.aws
+
+jobs:
+  build-and-push-image:
+    name: Build and Push Docker Image
+    runs-on: ubuntu-latest
+
+    # These permissions are required for the OIDC connection and for reading repository content.
+    permissions:
+      id-token: write # Required for federated identity (OIDC) with AWS.
+      contents: read # Required to checkout the repository.
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          # The AWS region to configure the SDK for. For ECR Public, this is always us-east-1.
+          aws-region: ${{ env.AWS_REGION }}
+          # The ARN of the IAM role to assume. This should be stored as a GitHub secret.
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME_ARN }}
+          # The duration of the session, in seconds. Default is 1 hour.
+          role-session-name: GitHubActions-${{ github.run_id }}
+
+      - name: Log in to Amazon ECR Public
+        uses: aws-actions/amazon-ecr-login@v2
+        with:
+          registry-type: public
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build, tag, and push image to Amazon ECR Public
+        id: build-image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./server/lambda/functions/process_file
+          # A boolean to indicate if the image should be pushed.
+          push: true
+          # Define the tags for the image. We use the git SHA for a unique identifier and 'latest'.
+          tags: |
+            ${{ env.ECR_REGISTRY }}/${{ secrets.ECR_PUBLIC_REPOSITORY }}:${{ github.sha }}
+            ${{ env.ECR_REGISTRY }}/${{ secrets.ECR_PUBLIC_REPOSITORY }}:latest
+          # Add build arguments if needed, for example:
+          # build-args: |
+          #   MY_BUILD_ARG=value
+          #   ANOTHER_ARG=another_value
+
+      - name: Output Image URL
+        run: echo "Image pushed to ${{ steps.build-image.outputs.digest }}"
