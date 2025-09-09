@@ -18,6 +18,7 @@ on:
       - master
     paths:
       - "server/lambda/**"
+  workflow_dispatch:
 # Environment variables available to all jobs and steps in this workflow.
 env:
   # The ECR Public registry is always in the us-east-1 region.
@@ -64,6 +65,7 @@ jobs:
           # A boolean to indicate if the image should be pushed.
           push: true
           platforms: linux/arm64
+          provenance: false
           # Define the tags for the image. We use the git SHA for a unique identifier and 'latest'.
           tags: |
             ${{ env.ECR_REGISTRY }}/${{ secrets.ECR_PUBLIC_REPOSITORY }}:${{ github.sha }}
@@ -72,10 +74,10 @@ jobs:
           # build-args: |
           #   MY_BUILD_ARG=value
           #   ANOTHER_ARG=another_value
-
-      - name: Deploy Lambda Function
-        uses: aws-actions/aws-lambda-deploy@v1
-        with:
-          function-name: docsToVectors
-          package-type: Image
-          image-uri: ${{ steps.build-image.outputs.image }}
+          #
+      # - name: Deploy Lambda Function
+      #   uses: aws-actions/aws-lambda-deploy@v1.1.0
+      #   with:
+      #     function-name: docsToVectors
+      #     package-type: Image
+      #     image-uri: ${{ steps.build-image.outputs.image }}
