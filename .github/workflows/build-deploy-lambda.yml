@@ -22,7 +22,7 @@ on:
 # Environment variables available to all jobs and steps in this workflow.
 env:
   # The ECR Public registry is always in the us-east-1 region.
-  AWS_REGION: us-east-1
+  AWS_REGION: ap-south-1
   ECR_REGISTRY: public.ecr.aws
 
 jobs:
@@ -49,10 +49,8 @@ jobs:
           # The duration of the session, in seconds. Default is 1 hour.
           role-session-name: GitHubActions-${{ github.run_id }}
 
-      - name: Log in to Amazon ECR Public
+      - name: Log in to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
-        with:
-          registry-type: public
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -68,8 +66,8 @@ jobs:
           provenance: false
           # Define the tags for the image. We use the git SHA for a unique identifier and 'latest'.
           tags: |
-            ${{ env.ECR_REGISTRY }}/${{ secrets.ECR_PUBLIC_REPOSITORY }}:${{ github.sha }}
-            ${{ env.ECR_REGISTRY }}/${{ secrets.ECR_PUBLIC_REPOSITORY }}:latest
+            ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY }}:${{ github.sha }}
+            ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY }}:latest
           # Add build arguments if needed, for example:
           # build-args: |
           #   MY_BUILD_ARG=value
