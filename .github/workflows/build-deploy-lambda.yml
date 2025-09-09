@@ -1,15 +1,3 @@
-# This GitHub Action workflow builds a Docker image and pushes it to a public AWS Elastic Container Registry (ECR).
-#
-# Workflow triggers on a push to the 'main' branch.
-#
-# Prerequisites:
-# 1. An AWS ECR Public repository must exist.
-# 2. An AWS IAM Role with permissions to push to ECR Public, configured with a trust relationship for GitHub's OIDC provider.
-# 3. The following secrets must be configured in your GitHub repository settings:
-#    - AWS_REGION: The AWS region of your ECR repository (e.g., us-east-1). Note: ECR Public is always in us-east-1.
-#    - AWS_ROLE_TO_ASSUME_ARN: The ARN of the IAM role that GitHub Actions will assume.
-#    - ECR_PUBLIC_REPOSITORY: The name of your AWS ECR Public repository.
-
 name: Build and Push to AWS ECR Public
 
 on:
@@ -80,9 +68,9 @@ jobs:
           #   MY_BUILD_ARG=value
           #   ANOTHER_ARG=another_value
           #
-      # - name: Deploy Lambda Function
-      #   uses: aws-actions/aws-lambda-deploy@v1.1.0
-      #   with:
-      #     function-name: docsToVectors
-      #     package-type: Image
-      #     image-uri: ${{ steps.build-image.outputs.image }}
+      - name: Deploy Lambda Function
+        uses: aws-actions/aws-lambda-deploy@v1.1.0
+        with:
+          function-name: docsToVectors
+          package-type: Image
+          image-uri: ${{ steps.build-image.outputs.image }}
