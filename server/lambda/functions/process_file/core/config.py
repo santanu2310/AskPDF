@@ -11,7 +11,7 @@ class Settings:
     DEBUG: bool
 
     def __init__(self):
-        self.VDB_URI = os.environ["DB_URI"]
+        self.VDB_URI = os.environ["VDB_URI"]
         self.VDB_PORT = int(os.environ["VDB_PORT"])
         self.VDB_SECRET_KEY = os.environ["VDB_SECRET_KEY"]
         self.VDB_HEADER = os.environ.get("VDB_HEADER", "Authorization")

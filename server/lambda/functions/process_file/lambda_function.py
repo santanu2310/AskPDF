@@ -1,4 +1,3 @@
-import os
 import urllib.parse
 import boto3
 import hmac
@@ -15,8 +14,6 @@ from core.exceptions import DocumentLoadError, VectorStoreError, EmbeddingError
 print("Loading function")
 
 s3 = boto3.client("s3")
-region = os.environ["AWS_REGION"]
-
 
 settings = get_settings()
 
