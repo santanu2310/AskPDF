@@ -42,7 +42,8 @@ def lambda_handler(event, context):
         response_head = s3.head_object(Bucket=bucket, Key=key)
 
         metadata = response_head.get("Metadata", {})
-        doc_id = metadata.get("doc-id")
+        # doc_id = metadata.get("doc-id")
+        doc_id = "rest_string"
 
         chunks = load_documents(bucket=bucket, key=key, s3=s3, doc_id=doc_id)
         texts = [chunk["text"] for chunk in chunks]
