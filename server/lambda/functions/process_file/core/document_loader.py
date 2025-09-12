@@ -77,7 +77,7 @@ def load_documents(
     content_type = response.get("ContentType")
 
     try:
-        if content_type == "pdf":
+        if content_type == "application/pdf":
             text = extract_text_from_pdf(file_data)
         elif content_type == "docx":
             text = extract_text_from_docx(file_data)

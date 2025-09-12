@@ -1,11 +1,17 @@
 import uuid
-from typing import Optional
+import logging
+from typing import Optional, Any
+from pydantic import ValidationError
 from app.core.db import AsyncSession
 from app.core.schemas import UserAuthOut
+from app.core.memory_db import SQLiteKVStore
+from app.core.exceptions import InvalidPayloadException, FileStateUpdateException
 
 from .s3_service import create_presigned_upload_url
 from .crud import createDocs, createTempDocs
-from .schemas import UploadSession
+from .schemas import UploadSession, WebhookPayload
+
+logger = logging.getLogger(__name__)
 
 
 async def create_upload_session(
@@ -34,3 +40,20 @@ async def create_upload_session(
     else:
         upload_session.temp_id = str(docs.id)
     return upload_session, temp_session_token
+
+
+async def update_file_state(
+    body: dict[str, Any], memory_db: SQLiteKVStore
+) -> dict[str, Any]:
+    try:
+        data = WebhookPayload.model_validate(body)
+        memory_db.set(id=data.doc_id, status=data.status, desc=data.reason)
+
+        return {"status": "ok"}
+
+    except ValidationError as e:
+        logger.error(f"Invalid body : {str(e)}")
+        raise InvalidPayloadException(detail="Invalid body")
+    except Exception as e:
+        logger.error(f"Error updating file status: {str(e)}")
+        raise FileStateUpdateException()

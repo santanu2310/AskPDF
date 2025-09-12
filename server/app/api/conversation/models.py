@@ -9,6 +9,7 @@ class Conversation(BaseModel):
     user_id: Mapped[int] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
+    title: Mapped[str] = mapped_column(String(200), nullable=False)
 
     # Relationships
     documents = relationship("Document", back_populates="conversation")
@@ -18,7 +19,6 @@ class Conversation(BaseModel):
 class Message(BaseModel):
     __tablename__ = "messages"
 
-    id: Mapped[int] = mapped_column(primary_key=True, index=True)
     conversation_id: Mapped[int] = mapped_column(
         ForeignKey("conversations.id", ondelete="CASCADE"), nullable=False
     )

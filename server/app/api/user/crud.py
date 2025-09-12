@@ -6,7 +6,7 @@ from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
-from app.core.exceptions import UserNotFoundError, TokenRevocationError, DatabaseError
+from app.core.exceptions import NotFoundError, TokenRevocationError, DatabaseError
 from .models import User, RevokedRefToken
 
 logger = logging.getLogger(name=__name__)
@@ -51,7 +51,7 @@ async def get_user_by_id(user_id: str, db: AsyncSession) -> User:
         user = result.scalar_one_or_none()
 
         if not user:
-            raise UserNotFoundError(f"User with id {user_id} not found")
+            raise NotFoundError(f"User with id {user_id} not found")
 
         return user
 

@@ -12,6 +12,8 @@ class Settings(BaseSettings):
     API_KEY: str = ""
     API_ENDPOINT: str = ""
 
+    WEBHOOK_SECRET: str = ""
+
     # Google OAuth 2.0 Configuration
     GOOGLE_OAUTH2_CLIENT_ID: str = ""
     GOOGLE_OAUTH2_CLIENT_SECRET: str = ""
@@ -29,6 +31,13 @@ class Settings(BaseSettings):
     AWS_ACCESS_KEY: str = ""
     AWS_SECRET_KEY: str = ""
     BUCKET_NAME: str = ""
+
+    # Vector Store
+    COLLECTION_NAME: str = ""
+    CHROMA_HOST: str = ""
+    CHROMA_PORT: int = 8000
+    CHROMA_AUTH_SECRET: str = ""
+    CHROMA_TOKEN_HEADER: str = "Authorization"
 
     # DB Configuration
     POSTGRES_USER: str = "devuser"
