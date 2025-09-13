@@ -1,73 +1,38 @@
-# Welcome to your Lovable project
+# sv
 
-## Project info
+Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
 
-**URL**: https://lovable.dev/projects/d64d330a-6b31-411b-876a-a53af71b0aac
+## Creating a project
 
-## How can I edit this code?
-
-There are several ways of editing your application.
-
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/d64d330a-6b31-411b-876a-a53af71b0aac) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+If you're seeing this, you've probably already done this step. Congrats!
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+# create a new project in the current directory
+npx sv create
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+# create a new project in my-app
+npx sv create my-app
 ```
 
-**Edit a file directly in GitHub**
+## Developing
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
 
-**Use GitHub Codespaces**
+```sh
+npm run dev
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+# or start the server and open the app in a new browser tab
+npm run dev -- --open
+```
 
-## What technologies are used for this project?
+## Building
 
-This project is built with:
+To create a production version of your app:
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+```sh
+npm run build
+```
 
-## How can I deploy this project?
+You can preview the production build with `npm run preview`.
 
-Simply open [Lovable](https://lovable.dev/projects/d64d330a-6b31-411b-876a-a53af71b0aac) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
