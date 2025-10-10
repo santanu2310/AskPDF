@@ -4,6 +4,7 @@ import hmac
 import hashlib
 import json
 import logging
+import requests
 from typing import Literal, Optional
 from botocore.config import Config
 from core.embedder import Embedder
@@ -37,8 +38,7 @@ def send_status_update(
     ).hexdigest()
 
     headers = {"X-Signature": signature, "Content-Type": "application/json"}
-    print(f"{body=}")
-    # requests.post(settings.HOOK_URL, data=body, headers=headers)
+    requests.post(settings.HOOK_URL, data=body, headers=headers)
 
 
 def lambda_handler(event, context):
