@@ -26,6 +26,7 @@ class RAGResponse(BaseModel):
 class Message(BaseModel):
     id: UUID
     text: str
+    citations: Optional[list[Citation]] = None
     conversation_id: UUID
     role: Literal["user", "assistant"]
     time_stamp: datetime

@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     GOOGLE_OAUTH2_CLIENT_ID: str = ""
     GOOGLE_OAUTH2_CLIENT_SECRET: str = ""
     GOOGLE_OAUTH2_PROJECT_ID: str = ""
-    GOOGLE_OAUTH_REDIRECT_URI: str = "http://localhost:5174/auth/callback"
+    GOOGLE_OAUTH_REDIRECT_URI: str = "http://localhost:5173/auth/callback"
 
     # JWT Configuration
     JWT_ACCESS_SECRET_KEY: str = ""
@@ -38,6 +38,10 @@ class Settings(BaseSettings):
     CHROMA_PORT: int = 8000
     CHROMA_AUTH_SECRET: str = ""
     CHROMA_TOKEN_HEADER: str = "Authorization"
+
+    # Queue (SQS)
+    SQS_QUEUE: str = ""
+    SQS_QUEUE_NAME: str = ""
 
     # DB Configuration
     POSTGRES_USER: str = "devuser"

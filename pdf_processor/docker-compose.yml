@@ -1,0 +1,10 @@
+name: pdf_processor
+
+services:
+  worker:
+    build: .
+    # command: celery -A app.celery_app worker -l info -c 1
+    env_file:
+      - app/.env
+    volumes:
+      - .:/app

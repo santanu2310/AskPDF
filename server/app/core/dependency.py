@@ -48,9 +48,9 @@ def decode_token(
 
 
 async def get_id_from_access_token(
-    refresh_token: Annotated[str, Cookie(alias="access_token")],
+    access_token: Annotated[str, Cookie(alias="access_token")],
 ) -> UserAuthOut:
-    return decode_token(refresh_token, settings.JWT_ACCESS_SECRET_KEY)
+    return decode_token(access_token, settings.JWT_ACCESS_SECRET_KEY)
 
 
 async def get_optional_user_from_access_token(

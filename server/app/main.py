@@ -61,7 +61,7 @@ async def lifespan(app: FastAPI):
 def create_app() -> FastAPI:
     app = FastAPI(lifespan=lifespan)
 
-    origins = ["http://localhost:5174"]
+    origins = ["http://localhost:5173"]
 
     app.include_router(router=router)
 
