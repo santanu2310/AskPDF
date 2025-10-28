@@ -1,5 +1,5 @@
 from contextlib import asynccontextmanager
-
+import asyncio
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -7,30 +7,11 @@ from app.api.api import router
 from app.core.db import create_async_engine, create_async_sessionmaker
 from app.core.memory_db import SQLiteKVStore
 from app.core.config import settings
-
 from app.core.embedder import Embedder
 from app.core.vector_store import VectorStore
+from app.workers.tasks import file_update_consumer
 
 from app.exception_handler import add_exception_handlers
-
-#     chunks = load_documents("data")
-#     texts = [chunk["text"] for chunk in chunks]
-#
-#     embedder = Embedder()
-#     embeddings = embedder.embed(texts)  # List[List[float]]
-#     embedded_chunks = [
-#         {
-#             "embedding": embedding,
-#             "text": chunk["text"],
-#             "source": chunk["source"],
-#             "chunk_id": chunk["chunk_id"],
-#         }
-#         for chunk, embedding in zip(chunks, embeddings)
-#     ]
-#
-#     vector_store: VectorStore = VectorStore()
-#     vector_store.add_embeddings(chunks, embeddings)
-#
 
 
 @asynccontextmanager
@@ -47,6 +28,8 @@ async def lifespan(app: FastAPI):
         token_header=settings.CHROMA_TOKEN_HEADER,
     )
 
+    app.state.background_tasks = [asyncio.create_task(file_update_consumer())]
+
     # yield dict → available in request.state
     yield {
         "db": sessionmaker,
@@ -54,6 +37,9 @@ async def lifespan(app: FastAPI):
         "embedder": embedder,
         "vector_store": vector_store,
     }
+
+    for task in app.state.background_tasks:
+        task.cancel()
 
     await engine.dispose()
 

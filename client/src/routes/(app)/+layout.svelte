@@ -89,14 +89,14 @@
 				<ul class="mt-2 space-y-1">
 					<li>
 						<a
-							href=""
+							href="/"
 							class="block truncate rounded-lg p-2 text-sm text-[var(--text-secondary)] hover:bg-[var(--bg-primary)]"
 							>Chat from yesterday...</a
 						>
 					</li>
 					<li>
 						<a
-							href="#"
+							href="/"
 							class="block truncate rounded-lg p-2 text-sm text-[var(--text-secondary)] hover:bg-[var(--bg-primary)]"
 							>A previous conversation...</a
 						>
@@ -132,7 +132,12 @@
 				{#if $user}
 					<div class="h-10 w-12 flex items-center justify-center flex-shrink-0">
 						<div class="w-auto h-8 aspect-square overflow-hidden rounded-full">
-							<img src={$user.profilePicUrl} alt="" class="h-full w-full object-cover" />
+							<img
+								src={$user.profilePicUrl}
+								alt=""
+								referrerpolicy="no-referrer"
+								class="h-full w-full object-cover"
+							/>
 						</div>
 					</div>
 					<span

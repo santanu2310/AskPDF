@@ -3,7 +3,7 @@ import logging
 from app.core.embedder import Embedder
 from app.core.vector_store import VectorStore
 from app.core.config import settings
-from core.exceptions import MessageProcessingError
+from app.core.exceptions import MessageProcessingError
 from .schemas import RAGResponse
 
 logger = logging.getLogger(__name__)

@@ -27,9 +27,12 @@ class Settings(BaseSettings):
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     JWT_REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
-    # S3 Credentials
+    # aws
+    AWS_REGION: str = ""
     AWS_ACCESS_KEY: str = ""
     AWS_SECRET_KEY: str = ""
+
+    # S3 Credentials
     BUCKET_NAME: str = ""
 
     # Vector Store

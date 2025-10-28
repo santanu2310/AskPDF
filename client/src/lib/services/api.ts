@@ -15,10 +15,12 @@ export const AUTH_ENDPOINTS = {
 // Chat endpoints
 export const CONVERSATION_ENDPOINTS = {
 	UPLOAD_SESSION: '/docs/upload',
-	NEW_CHAT: `/chat/new`,
+	FILE_STATUS: (docId: string): string => `/docs/status/${docId}`,
+	NEW_CHAT: '/conversation/new',
+	GET_ALL_CHAT: '/conversation/all',
 	GET_CHAT: (chatId: string) => `/chat/${chatId}`,
 	UPLOAD_PDF: (chatId: string) => `/chat/${chatId}/upload`,
-	SEND_MESSAGE: (chatId: string) => `/chat/${chatId}/message`
+	SEND_MESSAGE: '/conversation/message'
 };
 
 export const guestRequest = axios.create({

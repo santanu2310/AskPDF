@@ -29,7 +29,7 @@ def send_status_update(
     doc_id: str, status: Literal["success", "failed"], reason: Optional[str] = None
 ):
     body = {"doc_id": doc_id, "status": status, "reason": reason}
-    publish_status_to_sqs(queue_name=settings.SQS_QUEUE_NAME, message_body=body)
+    publish_status_to_sqs(message_body=body)
 
 
 @celery_app.task

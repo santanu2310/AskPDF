@@ -1,13 +1,12 @@
 import json
 import logging
-from kombu import Connection
-from kombu.utils.url import safequote
+import boto3
 from app.config import get_settings
 
 logger = logging.getLogger(__name__)
 
 
-def publish_status_to_sqs(queue_name: str, message_body: dict):
+def publish_status_to_sqs(message_body: dict):
     """
     Publishes a raw JSON message to a specific Amazon SQS queue.
 
@@ -20,39 +19,22 @@ def publish_status_to_sqs(queue_name: str, message_body: dict):
     """
     settings = get_settings()
 
-    # URL-encode ONLY for broker URL
-    aws_access_key_encoded = safequote(settings.AWS_ACCESS_KEY_ID)
-    aws_secret_key_encoded = safequote(settings.AWS_SECRET_ACCESS_KEY)
+    try:
+        sqs = boto3.client(
+            "sqs",
+            region_name=settings.AWS_REGION,
+            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+            aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+        )
 
-    # Use encoded credentials in broker URL
-    broker_url = f"sqs://{aws_access_key_encoded}:{aws_secret_key_encoded}@"
-    # Kombu needs the region to connect to SQS correctly.
-    # We get this from your settings file.
-    transport_options = {
-        "region": settings.AWS_REGION,
-        "predefined_queues": {settings.SQS_QUEUE_NAME: {"url": settings.SQS_QUEUE}},
-    }
+        sqs.send_message(
+            QueueUrl=settings.SQS_QUEUE, MessageBody=json.dumps(message_body)
+        )
 
-    # Establish connection with the broker, including the region info.
-    with Connection(broker_url, transport_options=transport_options) as connection:
-        # SimpleQueue is a high-level interface perfect for this use case.
-        # Just provide the name of the queue from your SQS URL.
-        queue = connection.SimpleQueue(queue_name)
+        logger.info(f"Successfully published message to SQS queue {settings.SQS_QUEUE}")
+        logger.info(f"Message Body: {json.dumps(message_body)}")
 
-        try:
-            # The .put() method sends the message.
-            # We explicitly use the json serializer for clarity.
-            queue.put(message_body, serializer="json")
-
-            logger.info(f"Successfully published message to SQS queue '{queue_name}'")
-            logger.info(f"Message Body: {json.dumps(message_body)}")
-
-        except Exception as e:
-            # It's good practice to log any potential errors.
-            logger.error(f"Failed to publish message to SQS queue '{queue_name}'.")
-            logger.error(f"Exception: {e}")
-
-        finally:
-            # Cleanly close the queue resource.
-            queue.close()
-
+    except Exception as e:
+        # It's good practice to log any potential errors.
+        logger.error(f"Failed to publish message to SQS queue '{settings.SQS_QUEUE}'.")
+        logger.error(f"Exception: {e}")

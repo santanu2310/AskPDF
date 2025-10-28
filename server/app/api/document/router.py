@@ -1,23 +1,19 @@
-import hmac
-import hashlib
 from typing import Optional, Annotated
 from fastapi import (
     APIRouter,
     Depends,
     Response,
     Body,
-    Request,
-    HTTPException,
-    status,
-    Header,
 )
 
 from app.core.db import AsyncSession, get_db
-from app.core.dependency import get_optional_user_from_access_token
+from app.core.dependency import (
+    get_optional_user_from_access_token,
+    get_id_from_access_token,
+)
 from app.core.schemas import UserAuthOut
-from app.core.config import settings
 from app.core.memory_db import SQLiteKVStore, get_memory_db
-from .services import create_upload_session, update_file_state
+from .services import create_upload_session
 from .schemas import UploadRequest
 
 
@@ -46,28 +42,15 @@ async def doc_upload_session(
     return upload_session
 
 
-@router.post("/webhook")
-async def webhook(
-    request: Request,
-    x_signature: Annotated[str | None, Header()] = None,
+@router.get("status/{doc_id}")
+async def get_file_status(
+    doc_id: str,
+    user: UserAuthOut = Depends(get_id_from_access_token),
     memory_db: SQLiteKVStore = Depends(get_memory_db),
 ):
-    body = await request.body()
-    # signature = request.headers.get("X-Signature")
+    status = memory_db.get(doc_id)
 
-    expected = hmac.new(
-        settings.WEBHOOK_SECRET.encode(), body, hashlib.sha256
-    ).hexdigest()
+    if not status:
+        return {"id": doc_id, "status": "processing", "desc": "Going Multidimential"}
 
-    if not x_signature:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Missing x_signature"
-        )
-
-    if not hmac.compare_digest(x_signature, expected):
-        raise HTTPException(status_code=401, detail="Invalid signature")
-
-    data = await request.json()
-    await update_file_state(body=data, memory_db=memory_db)
-
-    return {"status": "ok"}
+    return status

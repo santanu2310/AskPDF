@@ -28,7 +28,9 @@
 		"vite": "^7.0.4"
 	},
 	"dependencies": {
+		"@santanu2310/svelte-pdf-kit": "^0.0.1",
 		"axios": "^1.12.1",
-		"remixicon": "^4.6.0"
+		"remixicon": "^4.6.0",
+		"svelte-pdf": "^1.0.28"
 	}
 }
