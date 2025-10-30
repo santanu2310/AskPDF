@@ -4,6 +4,13 @@ from fastapi import Request
 
 
 class SQLiteKVStore:
+    _instance = None
+
+    def __new__(cls, *args, **kwargs):
+        if not cls._instance:
+            cls._instance = super(SQLiteKVStore, cls).__new__(cls)
+        return cls._instance
+
     def __init__(self, memory: bool = True, db_path: str = "data.db"):
         if memory:
             self.conn = sqlite3.connect(":memory:", check_same_thread=False)
@@ -66,7 +73,7 @@ class SQLiteKVStore:
 
 # Dependency to inject SQLiteKVStore
 def get_memory_db(request: Request) -> SQLiteKVStore:
-    return request.app.state.memory_db
+    return request.state.memory_db
 
 
 all = ["SQLiteKVStore", "get_memory_db"]
