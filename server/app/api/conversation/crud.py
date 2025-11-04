@@ -17,7 +17,9 @@ logger = logging.getLogger(__name__)
 # --- Conversation CRUD Functions ---
 
 
-async def create_conversation(db: AsyncSession, user_id: str) -> Conversation:
+async def create_conversation(
+    db: AsyncSession, user_id: str, title: str
+) -> Conversation:
     """
     Creates a new, empty conversation for a specific user.
 
@@ -33,7 +35,7 @@ async def create_conversation(db: AsyncSession, user_id: str) -> Conversation:
     """
     try:
         # Create a new conversation instance
-        conversation = Conversation(user_id=user_id)
+        conversation = Conversation(user_id=user_id, title=title)
         db.add(conversation)
         await db.commit()
         await db.refresh(conversation)

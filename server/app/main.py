@@ -9,6 +9,7 @@ from app.core.memory_db import SQLiteKVStore
 from app.core.config import settings
 from app.core.embedder import Embedder
 from app.core.vector_store import VectorStore
+from app.core.llm import LLMManager
 from app.workers.tasks import file_update_consumer
 
 from app.exception_handler import add_exception_handlers
@@ -20,6 +21,14 @@ async def lifespan(app: FastAPI):
     sessionmaker = create_async_sessionmaker(engine)
     memory_db = SQLiteKVStore(memory=True)  # create once
     embedder = Embedder()
+    model_lg = LLMManager(
+        api_key=settings.API_KEY,
+        model_name=settings.MODEL_LG,
+    )
+    model_sm = LLMManager(
+        api_key=settings.API_KEY,
+        model_name=settings.MODEL_SM,
+    )
     vector_store = VectorStore(
         collection_name=settings.COLLECTION_NAME,
         host=settings.CHROMA_HOST,
@@ -36,6 +45,8 @@ async def lifespan(app: FastAPI):
         "memory_db": memory_db,
         "embedder": embedder,
         "vector_store": vector_store,
+        "model_sm": model_sm,
+        "model_lg": model_lg,
     }
 
     for task in app.state.background_tasks:

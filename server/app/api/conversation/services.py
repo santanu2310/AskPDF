@@ -4,6 +4,7 @@ from app.core.db import AsyncSession
 from app.core.schemas import UserAuthOut
 from app.core.embedder import Embedder
 from app.core.vector_store import VectorStore
+from app.core.llm import LLMManager
 
 from .schemas import MessagePayload, MessageResponse, Message as Message_S
 from .crud import (
@@ -12,7 +13,7 @@ from .crud import (
     get_conversations_by_user,
     get_conversation_with_messages,
 )
-from .rag import RAGPipeline
+from .rag import generate_augmented_response, generate_conversation_title
 from .models import Conversation
 
 
@@ -25,6 +26,8 @@ async def handle_message(
     db: AsyncSession,
     embedder: Embedder,
     store: VectorStore,
+    model_sm: LLMManager,
+    model_lg: LLMManager,
 ) -> MessageResponse:
     created_at_time = None
     file_id = None
@@ -35,18 +38,29 @@ async def handle_message(
         if not payload.file_id:
             raise ValueError("file_id is required for a new conversation.")
 
-        conversation = await create_conversation(db=db, user_id=user.user_id)
+        title = await generate_conversation_title(
+            user_query=payload.message, llm=model_sm
+        )
+        logger.error(f"{title=}")
+
+        conversation = await create_conversation(
+            db=db, user_id=user.user_id, title=title
+        )
         conv_id = conversation.id
         created_at_time = conversation.created_at
-
-        # TODO: Update the document-s with conversation id
 
     user_message = await create_message(
         db=db, conversation_id=str(conv_id), content=payload.message, role="user"
     )
 
-    rag = RAGPipeline(embedder=embedder, store=store)
-    agent_response = await rag.run(query=payload.message, top_k=5)
+    agent_response = await generate_augmented_response(
+        query=payload.message,
+        embedder=embedder,
+        store=store,
+        llm=model_lg,
+        doc_id=payload.file_id,
+        top_k=5,
+    )
 
     assistant_message = await create_message(
         db=db,

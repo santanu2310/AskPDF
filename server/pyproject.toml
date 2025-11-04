@@ -14,6 +14,7 @@ dependencies = [
     "fastapi[standard]>=0.116.0",
     "google-api-python-client>=2.179.0",
     "google-auth-oauthlib>=1.2.2",
+    "google-genai>=1.47.0",
     "numpy>=2.3.2",
     "pipreqs>=0.5.0",
     "psycopg2-binary>=2.9.10",

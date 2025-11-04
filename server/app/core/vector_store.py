@@ -1,10 +1,10 @@
 from typing import Any
+from chromadb.api.types import QueryResult
 from fastapi import Request
 import numpy as np
 from chromadb import HttpClient
 from chromadb.config import Settings
 from chromadb.errors import ChromaError
-from typing import Dict
 import logging
 from .exceptions import VectorStoreError
 
@@ -63,23 +63,40 @@ class VectorStore:
             logger.exception(f"Unexpected error in add_embeddings: {e}")
             raise RuntimeError("An error occurred while storing embeddings.") from e
 
-    def query(self, embedding: np.ndarray, top_k: int = 5) -> list[Dict]:
-        try:
-            results = self.collection.query(query_embeddings=embedding, n_results=top_k)
+    def query(
+        self, embedding: np.ndarray, top_k: int = 5, doc_id: str | None = None
+    ) -> QueryResult:
+        if not self.collection:
+            raise VectorStoreError("VectorStore is not initialized.")
 
-            return [
-                {"text": doc, "source": meta["source"], "chunk_id": meta["chunk_id"]}
-                for doc, meta in zip(results["documents"][0], results["metadatas"][0])  # type: ignore
-            ]
+        try:
+            where_clause = {}
+
+            if doc_id:
+                where_clause["doc_id"] = doc_id
+
+            results = self.collection.query(
+                query_embeddings=embedding,
+                n_results=top_k,
+                where=where_clause
+                if where_clause
+                else None,  # Pass the where_clause here
+            )
+
+            logger.error(f"{results=}")
+
+            return results
 
         except (KeyError, IndexError, ValueError) as e:
             logger.error(f"Failed to parse query results: {e}")
+
             raise RuntimeError(
                 "Failed to parse query results from vector store."
             ) from e
 
         except Exception as e:
             logger.exception(f"Error querying vector store: {e}")
+
             raise RuntimeError("An error occurred during vector store query.") from e
 
 

@@ -5,6 +5,7 @@ from app.core.embedder import Embedder, get_embedder
 from app.core.db import get_db, AsyncSession
 from app.core.schemas import UserAuthOut
 from app.core.vector_store import get_vector_db, VectorStore
+from app.core.llm import LLMManager, get_llm_sm, get_llm_lg
 from app.core.dependency import (
     get_optional_user_from_access_token,
     get_id_from_access_token,
@@ -22,9 +23,17 @@ async def query(
     vector_store: VectorStore = Depends(get_vector_db),
     embedder: Embedder = Depends(get_embedder),
     user: UserAuthOut = Depends(get_id_from_access_token),
+    llm_lg: LLMManager = Depends(get_llm_lg),
+    llm_sm: LLMManager = Depends(get_llm_sm),
 ):
     return await handle_message(
-        payload=payload, user=user, db=db, embedder=embedder, store=vector_store
+        payload=payload,
+        user=user,
+        db=db,
+        embedder=embedder,
+        store=vector_store,
+        model_lg=llm_lg,
+        model_sm=llm_sm,
     )
 
 

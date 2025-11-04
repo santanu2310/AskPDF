@@ -11,6 +11,9 @@ class Settings(BaseSettings):
 
     API_KEY: str = ""
     API_ENDPOINT: str = ""
+    GOOGLE_PROJECT_ID: str = ""
+    MODEL_LG: str = ""
+    MODEL_SM: str = ""
 
     WEBHOOK_SECRET: str = ""
 

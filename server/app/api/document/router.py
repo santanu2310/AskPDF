@@ -1,3 +1,4 @@
+import logging
 from typing import Optional, Annotated
 from fastapi import (
     APIRouter,
@@ -18,6 +19,8 @@ from .schemas import UploadRequest
 
 
 router = APIRouter()
+
+logger = logging.getLogger(__name__)
 
 
 @router.post("/upload")
@@ -42,7 +45,7 @@ async def doc_upload_session(
     return upload_session
 
 
-@router.get("status/{doc_id}")
+@router.get("/status/{doc_id}")
 async def get_file_status(
     doc_id: str,
     user: UserAuthOut = Depends(get_id_from_access_token),
