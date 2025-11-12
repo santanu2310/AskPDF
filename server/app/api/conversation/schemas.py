@@ -87,6 +87,7 @@ class Conversation(BaseModel):
     user_id: UUID
     created_at: datetime
     title: str
+    updated_at: datetime
 
     # This allows the schema to be created from a database model
     model_config = config

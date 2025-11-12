@@ -25,10 +25,8 @@
 	let messages: Message[] = $derived(conversation?.messages ?? []);
 
 	$effect(() => {
-		console.log(chatId);
 		if (chatId === 'new') {
 			documentId = $uploadedDocumentId || '';
-			console.log(documentId);
 			isTemp = false; // Assuming uploaded documents go to 'document' store
 		}
 	});

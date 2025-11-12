@@ -18,6 +18,7 @@ export interface Conversation {
 	messages: Array<Message>;
 	documents: Array<string>;
 	createdAt: string;
+	updated_at: string;
 }
 
 export function mapMessage(serverMessage: any): Message {
@@ -37,7 +38,8 @@ export function mapConversation(serverConversation: any): Conversation {
 		title: serverConversation.title,
 		messages: serverConversation.messages?.map(mapMessage) || [],
 		documents: serverConversation.documents || [],
-		createdAt: serverConversation.created_at
+		createdAt: serverConversation.created_at,
+		updated_at: serverConversation.updated_at
 	};
 }
 

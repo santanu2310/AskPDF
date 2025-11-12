@@ -1,12 +1,16 @@
-<script>
+<script lang="ts">
 	import { onMount } from 'svelte';
 	import { user } from '$lib/store/user';
 	import icon from '$lib/assets/icon.png';
+	import type { Conversation } from '$lib/types/conversation';
+	import { conversations } from '$lib/store/conversation';
+	import { syncConversations } from '$lib/services/conversation';
 
 	// Theme state. Defaults to false (light mode).
-	let isDarkMode = false;
+	let isDarkMode = $state(false);
+	let isLoading = $state(true);
 
-	onMount(() => {
+	onMount(async () => {
 		// Check for saved theme preference in localStorage on component mount.
 		const savedTheme = localStorage.getItem('theme');
 		if (savedTheme === 'dark') {
@@ -20,15 +24,13 @@
 
 		// Apply the 'dark' class to the document root based on initial state.
 		updateThemeClass(isDarkMode);
+		await syncConversations();
+		console.log($conversations);
+		isLoading = false;
 	});
 
 	// --- Theme Management ---
-
-	/**
-	 * Toggles the 'dark' class on the <html> element to apply Tailwind's dark mode styles.
-	 * @param {boolean} isDark - Whether to apply the dark theme.
-	 */
-	function updateThemeClass(isDark) {
+	function updateThemeClass(isDark: boolean) {
 		const root = document.documentElement;
 		if (isDark) {
 			root.classList.add('dark');
@@ -37,10 +39,6 @@
 		}
 	}
 
-	/**
-	 * Toggles the theme between light and dark mode, updates the UI,
-	 * and persists the choice to localStorage.
-	 */
 	function toggleTheme() {
 		isDarkMode = !isDarkMode;
 		updateThemeClass(isDarkMode);
@@ -86,22 +84,28 @@
 			<!-- History Section -->
 			<div class="hidden pt-4 group-hover:block">
 				<h3 class="px-2 text-xs font-semibold uppercase text-[var(--text-muted)]">History</h3>
-				<ul class="mt-2 space-y-1">
-					<li>
-						<a
-							href="/"
-							class="block truncate rounded-lg p-2 text-sm text-[var(--text-secondary)] hover:bg-[var(--bg-primary)]"
-							>Chat from yesterday...</a
-						>
-					</li>
-					<li>
-						<a
-							href="/"
-							class="block truncate rounded-lg p-2 text-sm text-[var(--text-secondary)] hover:bg-[var(--bg-primary)]"
-							>A previous conversation...</a
-						>
-					</li>
-				</ul>
+				{#if isLoading}
+					<ul class="mt-2 space-y-1 animate-pulse">
+						<li>
+							<p class="w-full h-6 mt-3 block truncate rounded-lg bg-[var(--bg-primary)]"></p>
+						</li>
+						<li>
+							<p class="w-full h-6 mt-2 block truncate rounded-lg bg-[var(--bg-primary)]"></p>
+						</li>
+					</ul>
+				{:else}
+					<ul class="mt-2 space-y-1">
+						{#each Array.from($conversations.values()) as conversation}
+							<li>
+								<a
+									href="/chat/{conversation.id}"
+									class="block truncate rounded-lg p-2 text-sm text-[var(--text-secondary)] hover:bg-[var(--bg-primary)]"
+									>{conversation.title}
+								</a>
+							</li>
+						{/each}
+					</ul>
+				{/if}
 			</div>
 		</nav>
 
