@@ -24,6 +24,10 @@
 
 		// Apply the 'dark' class to the document root based on initial state.
 		updateThemeClass(isDarkMode);
+		if (!$user) {
+			isLoading = false;
+			return;
+		}
 		await syncConversations();
 		console.log($conversations);
 		isLoading = false;
@@ -52,11 +56,9 @@
 >
 	<!-- Collapsible Sidebar -->
 	<aside
-		class="group fixed left-0 top-0 z-10 flex h-full w-16 flex-col bg-[var(--bg-secondary)] backdrop-blur-lg border-r border-[var(--border-primary)] transition-all duration-300 ease-in-out hover:w-64"
+		class="group pt-4 w-16 fixed left-0 top-0 z-10 flex h-full flex-col bg-[var(--bg-secondary)] backdrop-blur-lg border-r border-[var(--border-primary)] transition-all duration-300 ease-in-out hover:w-64"
 	>
-		<div
-			class="flex h-16 items-center rounded-lg overflow-hidden transition-all duration-300 mx-2 my-2"
-		>
+		<div class="flex h-16 items-center rounded-lg overflow-hidden transition-all duration-300 p-2">
 			<div class="h-10 w-12 flex items-center justify-center flex-shrink-0">
 				<img src={icon} alt="" class="w-8 h-8 object-contain" />
 			</div>
@@ -66,7 +68,10 @@
 			>
 		</div>
 
-		<nav class="flex flex-col justify-start flex-grow space-y-4 px-2 py-4">
+		<nav
+			class=" flex flex-col justify-start space-y-4 px-2 py-4 min-h-0"
+			style="height: calc(100% - 190px)"
+		>
 			<!-- New Chat Button -->
 			<a
 				href="/"
@@ -82,8 +87,12 @@
 			</a>
 
 			<!-- History Section -->
-			<div class="hidden pt-4 group-hover:block">
-				<h3 class="px-2 text-xs font-semibold uppercase text-[var(--text-muted)]">History</h3>
+			<div class="flex flex-col grow pt-4 min-h-0">
+				<h3
+					class="px-2 text-xs font-semibold uppercase text-[var(--text-muted)] hidden group-hover:block"
+				>
+					History
+				</h3>
 				{#if isLoading}
 					<ul class="mt-2 space-y-1 animate-pulse">
 						<li>
@@ -94,7 +103,7 @@
 						</li>
 					</ul>
 				{:else}
-					<ul class="mt-2 space-y-1">
+					<ul class="mt-2 hidden flex-col grow overflow-y-scroll space-y-1 group-hover:flex">
 						{#each Array.from($conversations.values()) as conversation}
 							<li>
 								<a
@@ -110,7 +119,7 @@
 		</nav>
 
 		<!-- Bottom Section: Theme Toggle & User -->
-		<div class="px-2 py-4">
+		<div class="h-fit px-2 py-4">
 			<button
 				on:click={toggleTheme}
 				aria-label="Toggle theme"

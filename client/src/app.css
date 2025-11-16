@@ -2,69 +2,73 @@
 @import 'remixicon/fonts/remixicon.css';
 
 :root {
-  /* Background Colors */
-  --bg-primary: #f3f4f6; /* gray-100 */
-  --bg-secondary: rgba(255, 255, 255, 0.6); /* white/60 */
-  --bg-button-primary: #1f2937; /* gray-800 */
-  --bg-button-secondary: #ffffff; /* white */
-  --bg-button-hover-primary: #111827; /* gray-900 */
-  --bg-button-hover-secondary: #f9fafb; /* gray-50 */
-  --bg-error: #fef2f2; /* red-100 */
-  --bg-toggle-hover: #e5e7eb; /* gray-200 */
-  
-  /* Text Colors */
-  --text-primary: #111827; /* gray-900 */
-  --text-secondary: #4b5563; /* gray-600 */
-  --text-accent: #25bb96; /* indigo-600 */
-  --text-button-primary: #ffffff; /* white */
-  --text-button-secondary: #374151; /* gray-700 */
-  --text-error: #b91c1c; /* red-700 */
-  --text-muted: #9ca3af; /* gray-500 */
-  
-  /* Border Colors */
-  --border-primary: rgba(255, 255, 255, 0.2); /* white/20 */
-  --border-secondary: #d1d5db; /* gray-300 */
-  --border-error: #f87171; /* red-400 */
-  
-  /* Gradient Colors */
-  --gradient-accent: rgba(120, 119, 198, 0.3);
-  --gradient-transparent: rgba(255, 255, 255, 0);
-  
-  /* Focus Ring Colors */
-  --ring-primary: #16da8b; /* indigo-500 */
-  --ring-secondary: #1f2937; /* gray-800 */
+	/* Background Colors */
+	--bg-primary: #f3f4f6; /* gray-100 */
+	--bg-secondary: rgba(255, 255, 255, 0.6); /* white/60 */
+	--bg-button-primary: #1f2937; /* gray-800 */
+	--bg-button-secondary: #ffffff; /* white */
+	--bg-button-hover-primary: #111827; /* gray-900 */
+	--bg-button-hover-secondary: #f9fafb; /* gray-50 */
+	--bg-error: #fef2f2; /* red-100 */
+	--bg-toggle-hover: #e5e7eb; /* gray-200 */
+
+	/* Text Colors */
+	--text-primary: #111827; /* gray-900 */
+	--text-secondary: #4b5563; /* gray-600 */
+	--text-accent: #25bb96; /* indigo-600 */
+	--text-button-primary: #ffffff; /* white */
+	--text-button-secondary: #374151; /* gray-700 */
+	--text-error: #b91c1c; /* red-700 */
+	--text-muted: #9ca3af; /* gray-500 */
+
+	/* Border Colors */
+	--border-primary: rgba(255, 255, 255, 0.2); /* white/20 */
+	--border-secondary: #d1d5db; /* gray-300 */
+	--border-error: #f87171; /* red-400 */
+
+	/* Gradient Colors */
+	--gradient-accent: rgba(120, 119, 198, 0.3);
+	--gradient-transparent: rgba(255, 255, 255, 0);
+
+	/* Focus Ring Colors */
+	--ring-primary: #16da8b; /* indigo-500 */
+	--ring-secondary: #1f2937; /* gray-800 */
+
+	--primary: #fcc61d;
 }
 
 :root.dark {
-  /* Background Colors */
-  --bg-primary: #111827; /* gray-900 */
-  --bg-secondary: rgba(31, 41, 55, 0.6); /* gray-800/60 */
-  --bg-button-primary: #1f2937; /* gray-800 */
-  --bg-button-secondary: #f3f4f6; /* gray-100 */
-  --bg-button-hover-primary: #111827; /* gray-900 */
-  --bg-button-hover-secondary: #f9fafb; /* gray-50 */
-  --bg-error: rgba(127, 29, 29, 0.5); /* red-900/50 */
-  --bg-toggle-hover: #374151; /* gray-700 */
-  
-  /* Text Colors */
-  --text-primary: #f3f4f6; /* gray-100 */
-  --text-secondary: #9ca3af; /* gray-400 */
-  --text-accent: #25bb96; /* indigo-400 */
-  --text-button-primary: #ffffff; /* white */
-  --text-button-secondary: #374151; /* gray-700 */
-  --text-error: #fca5a5; /* red-200 */
-  --text-muted: #6b7280; /* gray-500 */
-  
-  /* Border Colors */
-  --border-primary: rgba(55, 65, 81, 0.5); /* gray-700/50 */
-  --border-secondary: #d1d5db; /* gray-300 */
-  --border-error: #dc2626; /* red-600 */
-  
-  /* Gradient Colors */
-  --gradient-accent: rgba(120, 119, 198, 0.3);
-  --gradient-transparent: rgba(255, 255, 255, 0);
-  
-  /* Focus Ring Colors */
-  --ring-primary: #16da8b; /* indigo-500 */
-  --ring-secondary: #111827; /* gray-900 */
+	/* Background Colors */
+	--bg-primary: #111827; /* gray-900 */
+	--bg-secondary: rgba(31, 41, 55, 0.6); /* gray-800/60 */
+	--bg-button-primary: #1f2937; /* gray-800 */
+	--bg-button-secondary: #f3f4f6; /* gray-100 */
+	--bg-button-hover-primary: #111827; /* gray-900 */
+	--bg-button-hover-secondary: #f9fafb; /* gray-50 */
+	--bg-error: rgba(127, 29, 29, 0.5); /* red-900/50 */
+	--bg-toggle-hover: #374151; /* gray-700 */
+
+	/* Text Colors */
+	--text-primary: #f3f4f6; /* gray-100 */
+	--text-secondary: #9ca3af; /* gray-400 */
+	--text-accent: #25bb96; /* indigo-400 */
+	--text-button-primary: #ffffff; /* white */
+	--text-button-secondary: #374151; /* gray-700 */
+	--text-error: #fca5a5; /* red-200 */
+	--text-muted: #6b7280; /* gray-500 */
+
+	/* Border Colors */
+	--border-primary: rgba(55, 65, 81, 0.5); /* gray-700/50 */
+	--border-secondary: #d1d5db; /* gray-300 */
+	--border-error: #dc2626; /* red-600 */
+
+	/* Gradient Colors */
+	--gradient-accent: rgba(120, 119, 198, 0.3);
+	--gradient-transparent: rgba(255, 255, 255, 0);
+
+	/* Focus Ring Colors */
+	--ring-primary: #16da8b; /* indigo-500 */
+	--ring-secondary: #111827; /* gray-900 */
+
+	--primary: #fcc61d;
 }

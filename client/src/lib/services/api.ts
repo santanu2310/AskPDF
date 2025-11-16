@@ -18,8 +18,7 @@ export const CONVERSATION_ENDPOINTS = {
 	FILE_STATUS: (docId: string): string => `/docs/status/${docId}`,
 	NEW_CHAT: '/conversation/new',
 	GET_ALL_CHAT: '/conversation/all',
-	GET_CHAT: (chatId: string) => `/chat/${chatId}`,
-	UPLOAD_PDF: (chatId: string) => `/chat/${chatId}/upload`,
+	GET_CHAT: (convId: string) => `/conversation/${convId}`,
 	SEND_MESSAGE: '/conversation/message'
 };
 

@@ -18,13 +18,13 @@ export interface Conversation {
 	messages: Array<Message>;
 	documents: Array<string>;
 	createdAt: string;
-	updated_at: string;
+	updatedAt: string;
 }
 
 export function mapMessage(serverMessage: any): Message {
 	return {
 		id: serverMessage.id,
-		text: serverMessage.text,
+		text: serverMessage.content,
 		citations: serverMessage.citations,
 		conversationId: serverMessage.conversation_id,
 		role: serverMessage.role,
@@ -39,7 +39,7 @@ export function mapConversation(serverConversation: any): Conversation {
 		messages: serverConversation.messages?.map(mapMessage) || [],
 		documents: serverConversation.documents || [],
 		createdAt: serverConversation.created_at,
-		updated_at: serverConversation.updated_at
+		updatedAt: serverConversation.updated_at
 	};
 }
 
@@ -47,23 +47,25 @@ export interface MessagePayload {
 	temp_id: string;
 	conv_id: string | null;
 	message: string;
-	file_id: string;
+	file_id: string | null;
 }
 
 export interface MessageResponse {
-    conversationId: string;
-    fileId?: string;
-    userMessage: Message;
-    assistantMessage: Message;
-    createdAt?: string;
+	conversationId: string;
+	fileId?: string;
+	userMessage: Message;
+	assistantMessage: Message;
+	createdAt?: string;
+	updatedAt?: string;
 }
 
 export function mapMessageResponse(serverResponse: any): MessageResponse {
-    return {
-        conversationId: serverResponse.conversation_id,
-        fileId: serverResponse.file_id,
-        userMessage: mapMessage(serverResponse.user_message),
-        assistantMessage: mapMessage(serverResponse.assistant_message),
-        createdAt: serverResponse.created_at
-    };
+	return {
+		conversationId: serverResponse.conversation_id,
+		fileId: serverResponse.file_id,
+		userMessage: mapMessage(serverResponse.user_message),
+		assistantMessage: mapMessage(serverResponse.assistant_message),
+		createdAt: serverResponse.created_at,
+		updatedAt: serverResponse.updated_at
+	};
 }

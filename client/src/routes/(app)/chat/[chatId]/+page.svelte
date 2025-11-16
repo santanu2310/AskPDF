@@ -1,10 +1,11 @@
 <script lang="ts">
 	import { onMount, tick } from 'svelte';
+	import { get } from 'svelte/store';
 	import { page } from '$app/state';
 	import { uploadedDocumentId } from '$lib/store/document';
 	import DocumentViewer from '$lib/components/DocumentViewer.svelte';
 	import type { Message, Conversation, MessageResponse } from '$lib/types/conversation';
-	import { sendMessage } from '$lib/services/conversation';
+	import { sendMessage, updateConversation } from '$lib/services/conversation';
 	import {
 		conversations,
 		addConversation,
@@ -19,10 +20,37 @@
 	let isTemp = $state(false);
 	const chatId = page.params.chatId;
 
+	if (chatId == 'new') {
+		currentConversation.set(null);
+	} else if (chatId) {
+		currentConversation.set(chatId);
+	}
+
 	const conversation = $derived(
 		$currentConversation ? $conversations.get($currentConversation) : undefined
 	);
 	let messages: Message[] = $derived(conversation?.messages ?? []);
+
+	onMount(() => {
+		const convId = $currentConversation;
+		if (!convId) return;
+
+		const fetchUpdates = async () => {
+			// Read from the store non-reactively using get() to prevent a dependency.
+			const conversation = get(conversations).get(convId);
+			let lastUpdated = new Date(0);
+
+			if (conversation && conversation.messages.length > 0) {
+				lastUpdated = conversation.messages.reduce((max, msg) => {
+					const msgDate = new Date(msg.timeStamp);
+					return msgDate > new Date(max) ? msgDate : max;
+				}, lastUpdated);
+			}
+			await updateConversation(convId, lastUpdated.toISOString());
+		};
+
+		fetchUpdates();
+	});
 
 	$effect(() => {
 		if (chatId === 'new') {
@@ -38,26 +66,39 @@
 		}
 	}
 
-	async function sendMsg() {
+	/**
+	 * Handles sending a user message.
+	 * - Trims the user input.
+	 * - Calls the sendMessage service to send the message to the backend.
+	 * - Updates the conversation in the store and IndexedDB based on whether it's a new conversation or an existing one.
+	 * - Scrolls the chat to the bottom after sending the message.
+	 */
+	async function handleSendMessage() {
 		const trimmedInput = userInput.trim();
 		if (!trimmedInput) return;
 
-		const response: MessageResponse = await sendMessage(trimmedInput);
+		userInput = '';
+		const response: MessageResponse = await sendMessage(trimmedInput, $currentConversation);
 
 		if (!$currentConversation) {
 			const conv: Conversation = {
 				id: response.conversationId,
 				title: trimmedInput,
-				messages: [response.assistantMessage, response.userMessage],
+				messages: [response.userMessage, response.assistantMessage],
 				documents: [response.fileId as string],
-				createdAt: response.createdAt as string
+				createdAt: response.createdAt as string,
+				updatedAt: response.updatedAt as string
 			};
+
 			await indexedDbService.addRecord('conversation', conv);
 			addConversation(conv);
+
+			uploadedDocumentId.set(null);
+			page.params.chatId = response.conversationId;
 		} else {
 			const conv: Conversation | undefined = addMessageToConversation(response.conversationId, [
-				response.assistantMessage,
-				response.userMessage
+				response.userMessage,
+				response.assistantMessage
 			]);
 
 			if (!conv) return new Error('Conversation is not abailable locally');
@@ -65,14 +106,13 @@
 			await indexedDbService.updateRecord('conversation', conv);
 		}
 
-		userInput = '';
 		scrollToBottom();
 	}
 
 	async function handleKeydown(e: KeyboardEvent) {
 		if (e.key === 'Enter' && !e.shiftKey) {
 			e.preventDefault();
-			await sendMsg();
+			await handleSendMessage();
 		}
 	}
 </script>
@@ -101,7 +141,10 @@
 		</header>
 
 		<!-- Message Container -->
-		<div bind:this={chatContainer} class="flex-grow p-6 space-y-6">
+		<div
+			bind:this={chatContainer}
+			class="flex-grow p-6 space-y-6 overflow-y-scroll overflow-x-hidden"
+		>
 			{#each messages as message (message.id)}
 				{#if message.role === 'assistant'}
 					<div class="flex items-start gap-3">
@@ -130,7 +173,7 @@
 				{:else}
 					<div class="flex items-start justify-end gap-3">
 						<div
-							class="max-w-lg rounded-xl rounded-tr-none bg-[var(--text-accent)] p-3 text-sm text-white"
+							class="max-w-lg rounded-xl rounded-tr-none bg-[var(--primary)] p-3 text-sm text-white"
 						>
 							<p>{message.text}</p>
 						</div>
@@ -150,9 +193,9 @@
 					class="w-full resize-none rounded-lg border border-[var(--border-secondary)] bg-[var(--bg-primary)] p-3 pr-12 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--ring-primary)]"
 				></textarea>
 				<button
-					onclick={sendMsg}
+					onclick={handleSendMessage}
 					aria-label="Send message"
-					class="absolute bottom-2 right-2 flex h-8 w-8 items-center justify-center rounded-full bg-[var(--text-accent)] text-white hover:opacity-90 disabled:opacity-50"
+					class="absolute bottom-2 right-2 flex h-8 w-8 items-center justify-center rounded-full bg-[var(--primary)] text-white hover:opacity-90 disabled:opacity-50"
 					disabled={!userInput.trim()}
 				>
 					<svg

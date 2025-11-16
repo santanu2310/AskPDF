@@ -3,25 +3,28 @@ import { authRequest, CONVERSATION_ENDPOINTS } from './api';
 import { uploadedDocumentId } from '$lib/store/document';
 import { currentConversation, conversations } from '$lib/store/conversation';
 import type { MessagePayload, MessageResponse, Conversation } from '$lib/types/conversation';
-import { mapMessageResponse } from '$lib/types/conversation';
+import { mapMessageResponse, mapConversation } from '$lib/types/conversation';
 import { indexedDbService } from './indexedDb';
 
-export async function sendMessage(message: string): Promise<MessageResponse> {
-	const conv = get(currentConversation);
+export async function sendMessage(
+	message: string,
+	convId: string | null = null
+): Promise<MessageResponse> {
 	const docId = get(uploadedDocumentId);
 
-	if (!docId) {
-		throw new Error('No document ID found to send message.');
+	if (!docId && !convId) {
+		throw new Error('No document ID and conv found to send message.');
 	}
 
 	const payload: MessagePayload = {
 		temp_id: new Date().getTime().toString(),
-		conv_id: conv,
+		conv_id: convId,
 		message: message,
 		file_id: docId
 	};
 
 	const response = await authRequest.post(CONVERSATION_ENDPOINTS.SEND_MESSAGE, payload);
+	console.log('server response for message', response.data);
 
 	return mapMessageResponse(response.data);
 }
@@ -38,8 +41,8 @@ export async function syncConversations(): Promise<Conversation[]> {
 	let lastSyncDate = new Date(0).toISOString();
 	if (localConversations.length > 0) {
 		lastSyncDate = localConversations.reduce((max, conv) => {
-			const convDate = new Date(conv.updated_at);
-			return convDate > new Date(max) ? conv.updated_at : max;
+			const convDate = new Date(conv.updatedAt);
+			return convDate > new Date(max) ? conv.updatedAt : max;
 		}, lastSyncDate);
 	}
 
@@ -49,17 +52,25 @@ export async function syncConversations(): Promise<Conversation[]> {
 		}
 	});
 
-	const serverConversations = response.data as Conversation[];
+	const serverConversations = response.data.map(mapConversation) as Conversation[];
+	console.log('serverConversations', serverConversations);
 
 	// Merge server conversations with local ones, then update IndexedDB and the store
 	if (serverConversations.length > 0) {
 		const conversationsToUpsert = serverConversations.map((serverConv) => {
 			const localConv = get(conversations).get(serverConv.id);
 			if (localConv) {
-				return { ...localConv, ...serverConv };
+				const {
+					messages: serverMessages,
+					documents: serverDocuments,
+					...restServerConv
+				} = serverConv;
+				return { ...localConv, ...restServerConv };
 			}
 			return serverConv;
 		});
+
+		console.log('conversationsToUpsert', conversationsToUpsert);
 
 		await indexedDbService.batchUpsert('conversation', conversationsToUpsert);
 		conversations.update((convsMap) => {
@@ -71,4 +82,34 @@ export async function syncConversations(): Promise<Conversation[]> {
 	}
 
 	return Array.from(get(conversations).values());
+}
+
+export async function updateConversation(conv_id: string, lastUpdated: string) {
+	try {
+		const response = await authRequest.get(CONVERSATION_ENDPOINTS.GET_CHAT(conv_id), {
+			params: {
+				last_updated: lastUpdated
+			}
+		});
+		console.log('response', response.data);
+
+		if (
+			response.data &&
+			response.data.messages.length > 0 &&
+			Object.keys(response.data).length > 0
+		) {
+			console.log('conversation response :', response.data);
+			const updatedConversation = mapConversation(response.data) as Conversation;
+
+			console.log('updatedConversation', updatedConversation);
+			await indexedDbService.updateRecord('conversation', updatedConversation);
+
+			conversations.update((convsMap) => {
+				convsMap.set(updatedConversation.id, updatedConversation);
+				return new Map(convsMap);
+			});
+		}
+	} catch (error) {
+		console.error('Failed to check for conversation updates:', error);
+	}
 }

@@ -1,9 +1,10 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onDestroy, onMount } from 'svelte';
 	import { indexedDbService } from '$lib/services/indexedDb';
 	import { authRequest, CONVERSATION_ENDPOINTS } from '$lib/services/api';
 	import type { Document } from '$lib/types/document';
 	import { PdfViewer } from '@santanu2310/svelte-pdf-kit';
+	import { uploadedDocumentId } from '$lib/store/document';
 	import LazerLine from './LazerLine.svelte';
 
 	interface Props {
@@ -15,6 +16,7 @@
 	let pdfUrl = $state<string>('');
 	let status: 'success' | 'failed' | 'processing' = $state('processing');
 	let error = $state<string>('');
+	let pollingActive = true;
 
 	function delay(ms: number) {
 		return new Promise((resolve) => setTimeout(resolve, ms));
@@ -22,7 +24,7 @@
 	async function pollFileStatus(interval = 3000, maxAttempts = 50) {
 		let attempts = 0;
 
-		while (attempts < maxAttempts) {
+		while (attempts < maxAttempts && pollingActive) {
 			attempts++;
 			console.log(`Polling attempt ${attempts}...`);
 
@@ -34,7 +36,6 @@
 					if (response.data.status != 'processing') return;
 				}
 
-				console.log('Condition not met, waiting for 3 seconds before next poll.');
 				await delay(interval);
 			} catch (error: any) {
 				console.error('Error during polling:', error.message);
@@ -48,7 +49,12 @@
 	onMount(async () => {
 		try {
 			const storeName = 'document';
-			const document = (await indexedDbService.getRecord(storeName, documentId)) as Document;
+			const document = (await indexedDbService.getRecord(
+				storeName,
+				$uploadedDocumentId as string
+			)) as Document;
+			console.log(document);
+			if (!document) return;
 
 			await pollFileStatus();
 
@@ -60,6 +66,9 @@
 		} catch (err) {
 			error = 'Failed to load document';
 		}
+	});
+	onDestroy(() => {
+		pollingActive = false;
 	});
 </script>
 
