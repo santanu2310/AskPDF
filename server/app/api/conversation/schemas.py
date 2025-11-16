@@ -10,7 +10,7 @@ class MessagePayload(BaseModel):
     temp_id: str
     conv_id: Optional[UUID]
     message: str
-    file_id: UUID
+    file_id: Optional[UUID]
 
 
 class Citation(BaseModel):
@@ -25,7 +25,7 @@ class RAGResponse(BaseModel):
 
 class Message(BaseModel):
     id: UUID
-    text: str
+    content: str
     citations: Optional[list[Citation]] = None
     conversation_id: UUID
     role: Literal["user", "assistant"]
@@ -56,6 +56,7 @@ class MessageResponse(BaseModel):
         default=None,
         description="The timestamp when the conversation was first created. Only present on the first turn.",
     )
+    updated_at: Optional[datetime] = Field(default=None)
 
 
 class DeleteConversation(BaseModel):
@@ -65,7 +66,7 @@ class DeleteConversation(BaseModel):
 class DocumentOut(BaseModel):
     id: UUID
     # Assuming your Document model has a 'file_name' or similar attribute
-    file_name: str
+    title: str
     created_at: datetime
 
     model_config = config

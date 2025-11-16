@@ -1,3 +1,4 @@
+from datetime import datetime
 from uuid import UUID
 from typing import Annotated
 from fastapi import APIRouter, Depends, Body
@@ -52,6 +53,7 @@ async def read_user_conversations(
 @router.get("/{conversation_id}", response_model=ConversationDetailOut)
 async def get_conversation_details(
     conversation_id: str,
+    last_updated: datetime,
     user: UserAuthOut = Depends(get_optional_user_from_access_token),
     db: AsyncSession = Depends(get_db),
 ):
@@ -60,5 +62,8 @@ async def get_conversation_details(
     """
     # Call the service function and return its result directly
     return await get_conversation(
-        db=db, user=user, conversation_id=UUID(conversation_id)
+        db=db,
+        user=user,
+        conversation_id=UUID(conversation_id),
+        last_updated=last_updated,
     )

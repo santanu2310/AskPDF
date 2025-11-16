@@ -1,3 +1,4 @@
+from datetime import datetime
 import logging
 from uuid import UUID
 from app.core.db import AsyncSession
@@ -5,6 +6,7 @@ from app.core.schemas import UserAuthOut
 from app.core.embedder import Embedder
 from app.core.vector_store import VectorStore
 from app.core.llm import LLMManager
+from app.api.document.crud import associate_document_with_conversation
 
 from .schemas import MessagePayload, MessageResponse, Message as Message_S
 from .crud import (
@@ -12,6 +14,7 @@ from .crud import (
     create_message,
     get_conversations_by_user,
     get_conversation_with_messages,
+    get_document_ids_by_conversation,
 )
 from .rag import generate_augmented_response, generate_conversation_title
 from .models import Conversation
@@ -31,9 +34,16 @@ async def handle_message(
 ) -> MessageResponse:
     created_at_time = None
     file_id = None
+    logger.error(f"{payload=}")
 
     if payload.conv_id:
         conv_id = payload.conv_id
+        logger.error(f"{conv_id=}")
+        file_ids = await get_document_ids_by_conversation(
+            db=db, conversation_id=conv_id, user_id=UUID(user.user_id)
+        )
+        logger.error(f"{file_ids=}")
+        file_id = file_ids[0]
     else:
         if not payload.file_id:
             raise ValueError("file_id is required for a new conversation.")
@@ -45,6 +55,9 @@ async def handle_message(
 
         conversation = await create_conversation(
             db=db, user_id=user.user_id, title=title
+        )
+        await associate_document_with_conversation(
+            db=db, document_id=payload.file_id, conversation_id=conversation.id
         )
         conv_id = conversation.id
         created_at_time = conversation.created_at
@@ -58,7 +71,7 @@ async def handle_message(
         embedder=embedder,
         store=store,
         llm=model_lg,
-        doc_id=payload.file_id,
+        doc_id=file_id,
         top_k=5,
     )
 
@@ -71,14 +84,14 @@ async def handle_message(
 
     user_msg_res = Message_S(
         id=user_message.id,
-        text=user_message.content,
+        content=user_message.content,
         conversation_id=conv_id,
         role="user",
         time_stamp=user_message.created_at,
     )
     assis_msg_res = Message_S(
         id=assistant_message.id,
-        text=assistant_message.content,
+        content=assistant_message.content,
         conversation_id=conv_id,
         role="assistant",
         time_stamp=assistant_message.created_at,
@@ -101,11 +114,15 @@ async def list_conversation(db: AsyncSession, user: UserAuthOut) -> list[Convers
 
 
 async def get_conversation(
-    db: AsyncSession, conversation_id: UUID, user: UserAuthOut
+    db: AsyncSession, conversation_id: UUID, user: UserAuthOut, last_updated: datetime
 ) -> Conversation:
     db_conversation = await get_conversation_with_messages(
-        db=db, conversation_id=conversation_id, user_id=UUID(user.user_id)
+        db=db,
+        conversation_id=conversation_id,
+        user_id=UUID(user.user_id),
+        last_updated=last_updated,
     )
+    logger.info(f"{db_conversation=}")
 
     if not db_conversation:
         logger.warning(f"Conversation with id {conversation_id} not found.")

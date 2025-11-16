@@ -1,5 +1,6 @@
 from typing import Optional
 import secrets
+from uuid import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import String, ForeignKey
 from app.core.models import BaseModel
@@ -11,10 +12,10 @@ class Document(BaseModel):
     title: Mapped[str] = mapped_column(String(255), nullable=True)
     key: Mapped[str] = mapped_column(String(512), nullable=False)
 
-    owner_id: Mapped[int] = mapped_column(
+    owner_id: Mapped[UUID] = mapped_column(
         ForeignKey("users.id", ondelete="SET NULL"), nullable=False
     )
-    conversation_id: Mapped[Optional[int]] = mapped_column(
+    conversation_id: Mapped[Optional[UUID]] = mapped_column(
         ForeignKey("conversations.id", ondelete="CASCADE"), nullable=True
     )
 

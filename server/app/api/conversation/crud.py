@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
 
@@ -50,7 +51,10 @@ async def create_conversation(
 
 
 async def get_conversation_with_messages(
-    db: AsyncSession, conversation_id: UUID, user_id: UUID
+    db: AsyncSession,
+    conversation_id: UUID,
+    user_id: UUID,
+    last_updated: Optional[datetime] = None,
 ) -> Optional[Conversation]:
     """
     Retrieves a single conversation by its ID, including all its messages and doucments.
@@ -67,9 +71,16 @@ async def get_conversation_with_messages(
         DatabaseError: If the database query fails.
     """
     try:
+        filter = [
+            Conversation.id == conversation_id,
+            Conversation.user_id == user_id,
+        ]
+        if last_updated:
+            filter.append(Conversation.updated_at > last_updated)
+
         query = (
             select(Conversation)
-            .where(Conversation.id == conversation_id, Conversation.user_id == user_id)
+            .where(*filter)
             .options(
                 selectinload(Conversation.messages),
                 selectinload(Conversation.documents),
@@ -155,6 +166,88 @@ async def delete_conversation(
         raise DatabaseError(
             f"Database error while deleting conversation '{conversation_id}'."
         )
+
+
+async def get_document_ids_by_conversation(
+    db: AsyncSession, conversation_id: UUID, user_id: UUID
+) -> List[UUID]:
+    """
+    Retrieves all document IDs associated with a given conversation.
+
+    Args:
+        db: The AsyncSession instance.
+        conversation_id: The ID of the conversation.
+        user_id: The ID of the user who owns the conversation.
+
+    Returns:
+        A list of document IDs.
+
+    Raises:
+        DatabaseError: If the database query fails.
+    """
+    try:
+        conversation = await get_conversation_with_messages(
+            db, conversation_id, user_id
+        )
+        logger.error(f"{conversation.documents=}")
+        if not conversation:
+            logger.warning(
+                f"Attempted to get documents from non-existent conversation with id {conversation_id}."
+            )
+            return []
+
+        return [doc.id for doc in conversation.documents]
+
+    except SQLAlchemyError as e:
+        logger.error(
+            f"Failed to retrieve document IDs for conversation {conversation_id}. Error: {e}"
+        )
+        raise DatabaseError(
+            f"Database error while fetching document IDs for conversation '{conversation_id}'."
+        )
+
+
+async def update_conversation_title(
+    db: AsyncSession, conversation_id: UUID, user_id: UUID, new_title: str
+) -> Optional[Conversation]:
+    """
+    Updates the title of a specific conversation.
+
+    Args:
+        db: The AsyncSession instance.
+        conversation_id: The ID of the conversation to update.
+        user_id: The ID of the user who owns the conversation.
+        new_title: The new title for the conversation.
+
+    Returns:
+        The updated Conversation object, or None if the conversation was not found.
+
+    Raises:
+        DatabaseError: If the database operation fails.
+    """
+    try:
+        conversation = await get_conversation_with_messages(
+            db, conversation_id, user_id
+        )
+        if not conversation:
+            logger.warning(
+                f"Attempted to update non-existent conversation with id {conversation_id}."
+            )
+            return None
+
+        conversation.title = new_title
+        await db.commit()
+        await db.refresh(conversation)
+        logger.info(
+            f"Successfully updated title for conversation {conversation_id} to '{new_title}'."
+        )
+        return conversation
+    except SQLAlchemyError as e:
+        await db.rollback()
+        logger.error(
+            f"Failed to update conversation {conversation_id} title. Error: {e}"
+        )
+        raise DatabaseError("Could not update conversation title.")
 
 
 # --- Message CRUD Functions ---
