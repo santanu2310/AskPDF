@@ -2,7 +2,6 @@
 	import { onMount } from 'svelte';
 	import { user } from '$lib/store/user';
 	import icon from '$lib/assets/icon.png';
-	import type { Conversation } from '$lib/types/conversation';
 	import { conversations } from '$lib/store/conversation';
 	import { syncConversations } from '$lib/services/conversation';
 
@@ -53,6 +52,7 @@
 <div
 	class:dark={isDarkMode}
 	class="flex h-screen bg-[var(--bg-primary)] text-[var(--text-primary)]"
+	style="background-image:radial-gradient(circle at 15% 100%,var(--gradient-accent) 0%,var(--bg-primary) 60%"
 >
 	<!-- Collapsible Sidebar -->
 	<aside
@@ -121,9 +121,9 @@
 		<!-- Bottom Section: Theme Toggle & User -->
 		<div class="h-fit px-2 py-4">
 			<button
-				on:click={toggleTheme}
+				onclick={toggleTheme}
 				aria-label="Toggle theme"
-				class="flex h-10 w-full items-center rounded-lg overflow-hidden text-[var(--text-muted)] hover:bg-[var(--bg-toggle-hover)] transition-all duration-300"
+				class="flex h-10 w-full items-center rounded-lg overflow-hidden text-[var(--text-muted)] hover:bg-[var(--bg-primary)] transition-all duration-300"
 			>
 				<div class="h-10 w-12 flex items-center justify-center flex-shrink-0">
 					{#if isDarkMode}
@@ -140,7 +140,7 @@
 			</button>
 
 			<div
-				class="mt-2 flex h-10 w-full cursor-pointer items-center rounded-lg overflow-hidden text-[var(--text-muted)] hover:bg-[var(--bg-toggle-hover)] transition-all duration-300"
+				class="mt-2 flex h-10 w-full cursor-pointer items-center rounded-lg overflow-hidden text-[var(--text-muted)] hover:bg-[var(--bg-primary)] transition-all duration-300"
 			>
 				{#if $user}
 					<div class="h-10 w-12 flex items-center justify-center flex-shrink-0">

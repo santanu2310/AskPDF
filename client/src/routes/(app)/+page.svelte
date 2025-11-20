@@ -27,7 +27,7 @@
 </script>
 
 <div
-	class="antialiased font-sans transition-colors duration-300 bg-[var(--bg-primary)] text-[var(--text-primary)] min-h-screen w-full flex flex-col items-center justify-center p-4"
+	class="antialiased font-sans transition-colors duration-300 text-[var(--text-primary)] min-h-screen w-full flex flex-col items-center justify-center p-4"
 >
 	<div class="w-full max-w-lg">
 		<div

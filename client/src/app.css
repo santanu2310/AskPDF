@@ -28,26 +28,16 @@
 	--border-error: #f87171; /* red-400 */
 
 	/* Gradient Colors */
-	--gradient-accent: rgba(120, 119, 198, 0.3);
+	--gradient-accent: #2196f3ad;
 	--gradient-transparent: rgba(255, 255, 255, 0);
-
-	/* Focus Ring Colors */
-	--ring-primary: #16da8b; /* indigo-500 */
-	--ring-secondary: #1f2937; /* gray-800 */
 
 	--primary: #2196f3;
 }
 
 :root.dark {
 	/* Background Colors */
-	--bg-primary: #101014; /* gray-900 */
-	--bg-secondary: #25252d; /* gray-800/60 */
-	--bg-button-primary: #1f2937; /* gray-800 */
-	--bg-button-secondary: #f3f4f6; /* gray-100 */
-	--bg-button-hover-primary: #111827; /* gray-900 */
-	--bg-button-hover-secondary: #f9fafb; /* gray-50 */
-	--bg-error: rgba(127, 29, 29, 0.5); /* red-900/50 */
-	--bg-toggle-hover: #374151; /* gray-700 */
+	--bg-primary: #0f1112; /* gray-900 */
+	--bg-secondary: #171b1cd9; /* gray-800/60 */
 
 	/* Text Colors */
 	--text-primary: #f3f4f6; /* gray-100 */
@@ -64,7 +54,7 @@
 	--border-error: #dc2626; /* red-600 */
 
 	/* Gradient Colors */
-	--gradient-accent: rgba(120, 119, 198, 0.3);
+	--gradient-accent: #2294f247;
 	--gradient-transparent: rgba(255, 255, 255, 0);
 
 	/* Focus Ring Colors */

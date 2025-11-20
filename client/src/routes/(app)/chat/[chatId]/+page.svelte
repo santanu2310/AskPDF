@@ -121,7 +121,7 @@
 	}
 </script>
 
-<div class="flex h-screen w-full bg-[var(--bg-primary)] text-[var(--text-primary)] font-sans">
+<div class="flex h-screen w-full text-[var(--text-primary)] font-sans">
 	<!-- Left Side: PDF Viewer -->
 	<div class="w-1/2 h-fulli p-5">
 		{#if documentId}
@@ -151,24 +151,9 @@
 				{#if message.role === 'assistant'}
 					<div class="w-full pr-5 flex items-start gap-3">
 						<div
-							class="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-white"
+							class="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-[var(--primary)] text-xl"
 						>
-							<svg
-								xmlns="http://www.w3.org/2000/svg"
-								x="0px"
-								y="0px"
-								width="100"
-								height="100"
-								viewBox="0 0 48 48"
-							>
-								<path
-									fill="#2196f3"
-									d="M23.426,31.911l-1.719,3.936c-0.661,1.513-2.754,1.513-3.415,0l-1.719-3.936	c-1.529-3.503-4.282-6.291-7.716-7.815l-4.73-2.1c-1.504-0.668-1.504-2.855,0-3.523l4.583-2.034	c3.522-1.563,6.324-4.455,7.827-8.077l1.741-4.195c0.646-1.557,2.797-1.557,3.443,0l1.741,4.195	c1.503,3.622,4.305,6.514,7.827,8.077l4.583,2.034c1.504,0.668,1.504,2.855,0,3.523l-4.73,2.1	C27.708,25.62,24.955,28.409,23.426,31.911z"
-								></path><path
-									fill="#7e57c2"
-									d="M38.423,43.248l-0.493,1.131c-0.361,0.828-1.507,0.828-1.868,0l-0.493-1.131	c-0.879-2.016-2.464-3.621-4.44-4.5l-1.52-0.675c-0.822-0.365-0.822-1.56,0-1.925l1.435-0.638c2.027-0.901,3.64-2.565,4.504-4.65	l0.507-1.222c0.353-0.852,1.531-0.852,1.884,0l0.507,1.222c0.864,2.085,2.477,3.749,4.504,4.65l1.435,0.638	c0.822,0.365,0.822,1.56,0,1.925l-1.52,0.675C40.887,39.627,39.303,41.232,38.423,43.248z"
-								></path>
-							</svg>
+							<i class="ri-gemini-fill"></i>
 						</div>
 						<div class="w-full rounded-xl rounded-tl-none text-base leading-7">
 							{@html marked.parse(message.text)}
@@ -177,7 +162,7 @@
 				{:else}
 					<div class="flex items-start justify-end gap-3 mt-10">
 						<div
-							class="max-w-full rounded-xl rounded-tr-none bg-[var(--bg-secondary)] p-3 text-sm text-white"
+							class="max-w-full rounded-xl rounded-tr-none bg-[var(--bg-secondary)] p-3 text-base text-[var(--text-primary)]"
 						>
 							<p>{message.text}</p>
 						</div>
@@ -189,19 +174,21 @@
 		<!-- Input Form -->
 		<div class=" bg-transparent p-4 pt-0">
 			<div
-				class="relative shadow-sm shadow-gray-500 rounded-lg overflow-hidden border-[0.5px] border-gray-400"
+				class="relative shadow-sm rounded-2xl overflow-hidden border border-[var(--border-primary)]"
+				style="box-shadow:0 2px 8px -2px color(from var(--gradient-accent) srgb r
+				g b/.16)"
 			>
 				<textarea
 					bind:value={userInput}
 					onkeydown={handleKeydown}
 					rows="3"
 					placeholder="Ask a question about the PDF..."
-					class="w-full outline-none border-none resize-none bg-[var(--bg-primary)] p-3 pr-12 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--ring-primary)]"
+					class="w-full outline-none border-none resize-none bg-[var(--bg-primary)] p-3 pr-12 text-sm"
 				></textarea>
 				<button
 					onclick={handleSendMessage}
 					aria-label="Send message"
-					class="absolute bottom-3 right-2 flex h-10 w-10 items-center justify-center rounded-full bg-[var(--primary)] text-white hover:opacity-90 disabled:opacity-50"
+					class="absolute bottom-2.5 right-2.5 flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--primary)] text-white hover:opacity-90 disabled:opacity-50"
 					disabled={!userInput.trim()}
 				>
 					<svg
