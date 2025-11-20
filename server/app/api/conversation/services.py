@@ -57,7 +57,10 @@ async def handle_message(
             db=db, user_id=user.user_id, title=title
         )
         await associate_document_with_conversation(
-            db=db, document_id=payload.file_id, conversation_id=conversation.id
+            db=db,
+            document_id=payload.file_id,
+            conversation_id=conversation.id,
+            user=user,
         )
         conv_id = conversation.id
         created_at_time = conversation.created_at

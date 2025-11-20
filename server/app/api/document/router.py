@@ -1,4 +1,5 @@
 import logging
+from uuid import UUID
 from typing import Optional, Annotated
 from fastapi import (
     APIRouter,
@@ -14,7 +15,7 @@ from app.core.dependency import (
 )
 from app.core.schemas import UserAuthOut
 from app.core.memory_db import SQLiteKVStore, get_memory_db
-from .services import create_upload_session
+from .services import create_upload_session, create_download_url
 from .schemas import UploadRequest
 
 
@@ -57,3 +58,12 @@ async def get_file_status(
         return {"id": doc_id, "status": "processing", "desc": "Going Multidimential"}
 
     return status
+
+
+@router.get("/url/{doc_id}")
+async def get_file_url(
+    doc_id: str,
+    user: UserAuthOut = Depends(get_id_from_access_token),
+    db: AsyncSession = Depends(get_db),
+):
+    return await create_download_url(doc_id=UUID(doc_id), user=user, db=db)

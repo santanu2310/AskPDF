@@ -51,7 +51,7 @@ def create_presigned_upload_url(key: str, doc_id: str) -> UploadSession:
         raise S3ServiceError("Failed to generate presigned URL")
 
 
-async def create_presigned_download_url(key: str):
+def create_presigned_download_url(key: str):
     # Generate a S3 Slient
     s3_client = boto3.client(
         "s3",

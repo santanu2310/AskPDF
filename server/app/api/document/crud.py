@@ -49,10 +49,14 @@ async def createDocs(
         raise DatabaseError(f"Database error while creating TempDocument '{title}'")
 
 
-async def get_document(db: AsyncSession, document_id: UUID) -> Optional[Document]:
+async def get_document(
+    db: AsyncSession, document_id: UUID, user: UserAuthOut
+) -> Optional[Document]:
     """Retrieves a document by its ID."""
     try:
-        query = select(Document).where(Document.id == document_id)
+        query = select(Document).where(
+            Document.id == document_id, Document.owner_id == user.user_id
+        )
         result = await db.execute(query)
         return result.scalar_one_or_none()
     except SQLAlchemyError as e:
@@ -61,11 +65,11 @@ async def get_document(db: AsyncSession, document_id: UUID) -> Optional[Document
 
 
 async def associate_document_with_conversation(
-    db: AsyncSession, document_id: UUID, conversation_id: UUID
+    db: AsyncSession, document_id: UUID, conversation_id: UUID, user: UserAuthOut
 ) -> Optional[Document]:
     """Associates a document with a conversation."""
     try:
-        document = await get_document(db, document_id)
+        document = await get_document(db=db, document_id=document_id, user=user)
         if not document:
             logger.warning(
                 f"Attempted to associate non-existent document with id {document_id}."

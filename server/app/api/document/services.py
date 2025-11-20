@@ -3,9 +3,10 @@ import logging
 from typing import Optional
 from app.core.db import AsyncSession
 from app.core.schemas import UserAuthOut
+from app.core.exceptions import NotFoundError
 
-from .s3_service import create_presigned_upload_url
-from .crud import createDocs, createTempDocs
+from .s3_service import create_presigned_upload_url, create_presigned_download_url
+from .crud import createDocs, createTempDocs, get_document
 from .schemas import UploadSession
 
 logger = logging.getLogger(__name__)
@@ -39,18 +40,9 @@ async def create_upload_session(
     return upload_session, temp_session_token
 
 
-# async def update_file_state(
-#     body: dict[str, Any], memory_db: SQLiteKVStore
-# ) -> dict[str, Any]:
-#     try:
-#         data = WebhookPayload.model_validate(body)
-#         memory_db.set(id=data.doc_id, status=data.status, desc=data.reason)
-#
-#         return {"status": "ok"}
-#
-#     except ValidationError as e:
-#         logger.error(f"Invalid body : {str(e)}")
-#         raise InvalidPayloadException(detail="Invalid body")
-#     except Exception as e:
-#         logger.error(f"Error updating file status: {str(e)}")
-#         raise FileStateUpdateException()
+async def create_download_url(doc_id: uuid.UUID, user: UserAuthOut, db: AsyncSession):
+    doc = await get_document(db=db, document_id=doc_id, user=user)
+
+    if not doc:
+        raise NotFoundError(message=f"No file found with id: {doc_id}")
+    return create_presigned_download_url(doc.key)
