@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onDestroy, onMount } from 'svelte';
 	import { indexedDbService } from '$lib/services/indexedDb';
-	import { authRequest, CONVERSATION_ENDPOINTS } from '$lib/services/api';
+	import { guestRequest, authRequest, CONVERSATION_ENDPOINTS } from '$lib/services/api';
 	import type { Document } from '$lib/types/document';
 	import { PdfViewer } from '@santanu2310/svelte-pdf-kit';
 	import { uploadedDocumentId } from '$lib/store/document';
@@ -16,12 +16,12 @@
 	let pdfUrl = $state<string>('');
 	let status: 'success' | 'failed' | 'processing' = $state('processing');
 	let error = $state<string>('');
-	let pollingActive = true;
+	let pollingActive = $state<boolean>(true);
 
 	function delay(ms: number) {
 		return new Promise((resolve) => setTimeout(resolve, ms));
 	}
-	async function pollFileStatus(interval = 3000, maxAttempts = 50) {
+	async function pollFileStatus(doc_id: string, interval = 3000, maxAttempts = 50) {
 		let attempts = 0;
 
 		while (attempts < maxAttempts && pollingActive) {
@@ -29,7 +29,7 @@
 			console.log(`Polling attempt ${attempts}...`);
 
 			try {
-				const response = await authRequest.get(CONVERSATION_ENDPOINTS.FILE_STATUS(documentId));
+				const response = await authRequest.get(CONVERSATION_ENDPOINTS.FILE_STATUS(doc_id));
 
 				if (response.data && response.data.status === 'success') {
 					status = response.data.status;
@@ -48,21 +48,28 @@
 	}
 	onMount(async () => {
 		try {
-			const storeName = 'document';
-			const document = (await indexedDbService.getRecord(
-				storeName,
-				$uploadedDocumentId as string
-			)) as Document;
-			console.log(document);
-			if (!document) return;
-
-			await pollFileStatus();
-
-			if (document?.data) {
-				pdfUrl = URL.createObjectURL(document.data);
-			} else {
-				error = 'Document not found';
+			console.log('documentId', documentId);
+			if ($uploadedDocumentId) {
+				await pollFileStatus($uploadedDocumentId);
 			}
+			pollingActive = false;
+			const storeName = 'document';
+			const document = (await indexedDbService.getRecord(storeName, documentId)) as Document;
+
+			console.log('document', document);
+			if (document) {
+				pdfUrl = URL.createObjectURL(document.data);
+				return;
+			}
+			const urlResponse = await authRequest.get(CONVERSATION_ENDPOINTS.FILE_URL(documentId));
+			console.log('url response', urlResponse.data);
+
+			const fileResponse = await guestRequest.get(urlResponse.data, { responseType: 'blob' });
+
+			const fileBlob = fileResponse.data;
+			pdfUrl = URL.createObjectURL(fileBlob);
+			const newDoc: Document = { id: documentId, data: fileBlob };
+			await indexedDbService.addRecord(storeName, newDoc);
 		} catch (err) {
 			error = 'Failed to load document';
 		}
@@ -72,7 +79,7 @@
 	});
 </script>
 
-{#if status == 'processing'}
+{#if status == 'processing' && pollingActive}
 	<div class="flex items-center justify-center p-8">
 		<LazerLine />
 	</div>

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount, tick } from 'svelte';
+	import { marked } from 'marked';
 	import { get } from 'svelte/store';
 	import { page } from '$app/state';
 	import { uploadedDocumentId } from '$lib/store/document';
@@ -16,7 +17,7 @@
 
 	let userInput = $state('');
 	let chatContainer: HTMLDivElement;
-	let documentId = $state<string>('');
+	let documentId = $state<string | null>(null);
 	let isTemp = $state(false);
 	const chatId = page.params.chatId;
 
@@ -26,9 +27,8 @@
 		currentConversation.set(chatId);
 	}
 
-	const conversation = $derived(
-		$currentConversation ? $conversations.get($currentConversation) : undefined
-	);
+	const conversation = $derived(chatId ? $conversations.get(chatId) : undefined);
+
 	let messages: Message[] = $derived(conversation?.messages ?? []);
 
 	onMount(() => {
@@ -50,6 +50,10 @@
 		};
 
 		fetchUpdates();
+	});
+
+	$effect(() => {
+		documentId = conversation?.documents[0].id as string;
 	});
 
 	$effect(() => {
@@ -119,61 +123,61 @@
 
 <div class="flex h-screen w-full bg-[var(--bg-primary)] text-[var(--text-primary)] font-sans">
 	<!-- Left Side: PDF Viewer -->
-	<div
-		class="w-1/2 h-full border-r border-[var(--border-secondary)] bg-gray-50 dark:bg-gray-900/50"
-	>
-		<!-- {#if documentId} -->
-		<div class="h-full w-full">
-			<DocumentViewer {documentId} {isTemp} />
-		</div>
-		<!-- {:else}
+	<div class="w-1/2 h-fulli p-5">
+		{#if documentId}
+			<div class="h-full w-full overflow-hidden rounded-xl">
+				<DocumentViewer {documentId} {isTemp} />
+			</div>
+		{:else}
 			<div class="flex h-full items-center justify-center text-[var(--text-muted)]">
 				<p>No document to display</p>
 			</div>
-		{/if}-->
+		{/if}
 	</div>
 
 	<!-- Right Side: Chat Interface -->
-	<div class="flex flex-1 flex-col h-screen">
+	<div class="w-1/2 flex flex-1 flex-col h-screen">
 		<!-- Chat Header -->
-		<header class="flex h-16 items-center border-b border-[var(--border-secondary)] px-6">
+		<header class="flex h-16 items-center px-6">
 			<h1 class="text-lg font-semibold">Ask PDF</h1>
 		</header>
 
 		<!-- Message Container -->
 		<div
 			bind:this={chatContainer}
-			class="flex-grow p-6 space-y-6 overflow-y-scroll overflow-x-hidden"
+			class="w-full flex-grow p-6 space-y-6 overflow-y-scroll overflow-x-hidden"
 		>
 			{#each messages as message (message.id)}
 				{#if message.role === 'assistant'}
-					<div class="flex items-start gap-3">
+					<div class="w-full pr-5 flex items-start gap-3">
 						<div
-							class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[var(--text-accent)] text-white"
+							class="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-white"
 						>
 							<svg
 								xmlns="http://www.w3.org/2000/svg"
-								class="h-6 w-6"
-								fill="none"
-								viewBox="0 0 24 24"
-								stroke="currentColor"
-								stroke-width="2"
+								x="0px"
+								y="0px"
+								width="100"
+								height="100"
+								viewBox="0 0 48 48"
 							>
 								<path
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.898 20.562L16.5 21.75l-.398-1.188a3.375 3.375 0 00-2.923-2.923L12 17.25l1.188-.398a3.375 3.375 0 002.923-2.923L16.5 12.75l.398 1.188a3.375 3.375 0 002.923 2.923L21 17.25l-1.188.398a3.375 3.375 0 00-2.923 2.923z"
-								/>
+									fill="#2196f3"
+									d="M23.426,31.911l-1.719,3.936c-0.661,1.513-2.754,1.513-3.415,0l-1.719-3.936	c-1.529-3.503-4.282-6.291-7.716-7.815l-4.73-2.1c-1.504-0.668-1.504-2.855,0-3.523l4.583-2.034	c3.522-1.563,6.324-4.455,7.827-8.077l1.741-4.195c0.646-1.557,2.797-1.557,3.443,0l1.741,4.195	c1.503,3.622,4.305,6.514,7.827,8.077l4.583,2.034c1.504,0.668,1.504,2.855,0,3.523l-4.73,2.1	C27.708,25.62,24.955,28.409,23.426,31.911z"
+								></path><path
+									fill="#7e57c2"
+									d="M38.423,43.248l-0.493,1.131c-0.361,0.828-1.507,0.828-1.868,0l-0.493-1.131	c-0.879-2.016-2.464-3.621-4.44-4.5l-1.52-0.675c-0.822-0.365-0.822-1.56,0-1.925l1.435-0.638c2.027-0.901,3.64-2.565,4.504-4.65	l0.507-1.222c0.353-0.852,1.531-0.852,1.884,0l0.507,1.222c0.864,2.085,2.477,3.749,4.504,4.65l1.435,0.638	c0.822,0.365,0.822,1.56,0,1.925l-1.52,0.675C40.887,39.627,39.303,41.232,38.423,43.248z"
+								></path>
 							</svg>
 						</div>
-						<div class="max-w-lg rounded-xl rounded-tl-none bg-[var(--bg-secondary)] p-3 text-sm">
-							<p>{message.text}</p>
+						<div class="w-full rounded-xl rounded-tl-none text-base leading-7">
+							{@html marked.parse(message.text)}
 						</div>
 					</div>
 				{:else}
-					<div class="flex items-start justify-end gap-3">
+					<div class="flex items-start justify-end gap-3 mt-10">
 						<div
-							class="max-w-lg rounded-xl rounded-tr-none bg-[var(--primary)] p-3 text-sm text-white"
+							class="max-w-full rounded-xl rounded-tr-none bg-[var(--bg-secondary)] p-3 text-sm text-white"
 						>
 							<p>{message.text}</p>
 						</div>
@@ -183,26 +187,31 @@
 		</div>
 
 		<!-- Input Form -->
-		<div class="border-t border-[var(--border-secondary)] bg-[var(--bg-secondary)]/50 p-4">
-			<div class="relative">
+		<div class=" bg-transparent p-4 pt-0">
+			<div
+				class="relative shadow-sm shadow-gray-500 rounded-lg overflow-hidden border-[0.5px] border-gray-400"
+			>
 				<textarea
 					bind:value={userInput}
 					onkeydown={handleKeydown}
-					rows="1"
+					rows="3"
 					placeholder="Ask a question about the PDF..."
-					class="w-full resize-none rounded-lg border border-[var(--border-secondary)] bg-[var(--bg-primary)] p-3 pr-12 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--ring-primary)]"
+					class="w-full outline-none border-none resize-none bg-[var(--bg-primary)] p-3 pr-12 text-sm focus:outline-none focus:ring-1 focus:ring-[var(--ring-primary)]"
 				></textarea>
 				<button
 					onclick={handleSendMessage}
 					aria-label="Send message"
-					class="absolute bottom-2 right-2 flex h-8 w-8 items-center justify-center rounded-full bg-[var(--primary)] text-white hover:opacity-90 disabled:opacity-50"
+					class="absolute bottom-3 right-2 flex h-10 w-10 items-center justify-center rounded-full bg-[var(--primary)] text-white hover:opacity-90 disabled:opacity-50"
 					disabled={!userInput.trim()}
 				>
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
-						class="h-5 w-5"
+						height="50%"
+						width="50%"
+						class="ml-[2px]"
 						viewBox="0 0 20 20"
 						fill="currentColor"
+						transform="rotate(90)"
 					>
 						<path
 							d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"
