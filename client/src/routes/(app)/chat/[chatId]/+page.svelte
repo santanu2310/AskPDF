@@ -15,11 +15,13 @@
 	} from '$lib/store/conversation';
 	import { indexedDbService } from '$lib/services/indexedDb';
 
-	let userInput = $state('');
 	let chatContainer: HTMLDivElement;
+	const chatId = page.params.chatId;
+
+	let userInput = $state('');
 	let documentId = $state<string | null>(null);
 	let isTemp = $state(false);
-	const chatId = page.params.chatId;
+	let query = $state<string | null>(null);
 
 	if (chatId == 'new') {
 		currentConversation.set(null);
@@ -81,7 +83,9 @@
 		const trimmedInput = userInput.trim();
 		if (!trimmedInput) return;
 
+		query = trimmedInput;
 		userInput = '';
+		scrollToBottom();
 		const response: MessageResponse = await sendMessage(trimmedInput, $currentConversation);
 
 		if (!$currentConversation) {
@@ -108,6 +112,7 @@
 			if (!conv) return new Error('Conversation is not abailable locally');
 
 			await indexedDbService.updateRecord('conversation', conv);
+			query = null;
 		}
 
 		scrollToBottom();
@@ -145,7 +150,7 @@
 		<!-- Message Container -->
 		<div
 			bind:this={chatContainer}
-			class="w-full flex-grow p-6 space-y-6 overflow-y-scroll overflow-x-hidden"
+			class="w-full flex-grow p-6 space-y-6 overflow-y-scroll overflow-x-hidden scroll-smooth"
 		>
 			{#each messages as message (message.id)}
 				{#if message.role === 'assistant'}
@@ -169,6 +174,36 @@
 					</div>
 				{/if}
 			{/each}
+			{#if query}
+				<div class="flex items-start justify-end gap-3 mt-10">
+					<div
+						class="max-w-full rounded-xl rounded-tr-none bg-[var(--bg-secondary)] p-3 text-base text-[var(--text-primary)]"
+					>
+						<p>{query}</p>
+					</div>
+				</div>
+				<div class="w-full pr-5 flex items-start gap-3">
+					<div
+						class="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-[var(--primary)] text-xl"
+					>
+						<i class="ri-gemini-fill"></i>
+					</div>
+					<div class="w-full rounded-xl rounded-tl-none text-base leading-7">
+						<ul class="w-full space-y-1 animate-pulse">
+							<li>
+								<p
+									class="w-4/5 h-6 block truncate rounded-lg bg-linear-to-r from-[var(--bg-primary)] to-[var(--bg-secondary)]"
+								></p>
+							</li>
+							<li>
+								<p
+									class="w-3/5 h-6 mt-2 block truncate rounded-lg bg-linear-to-r from-[var(--bg-primary)] to-[var(--bg-secondary)]"
+								></p>
+							</li>
+						</ul>
+					</div>
+				</div>
+			{/if}
 		</div>
 
 		<!-- Input Form -->
