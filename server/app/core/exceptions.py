@@ -84,3 +84,10 @@ class VectorStoreError(AppException):
 
     def __init__(self, message: str = "Failed to update file state."):
         super().__init__(message)
+
+
+class LLMRequestFailedError(AppException):
+    """Raised when an LLM request fails."""
+
+    def __init__(self, message: str = "LLM is busy or unavailable"):
+        super().__init__(message)

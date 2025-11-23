@@ -1,6 +1,10 @@
-import asyncio
+import logging
 from google import genai
 from fastapi import Request
+from google.genai.types import GenerateContentResponse
+from .exceptions import LLMRequestFailedError
+
+logger = logging.getLogger(__name__)
 
 
 class LLMManager:
@@ -11,13 +15,14 @@ class LLMManager:
     def get_client(self) -> genai.Client:
         return self._client
 
-    def generate_content(self, prompt: str):
-        return self._client.models.generate_content(
-            model=self.model_name, contents=prompt
-        )
-
-    async def generate_content_async(self, prompt: str):
-        return await asyncio.to_thread(self.generate_content, prompt)
+    async def generate_content(self, prompt: str) -> GenerateContentResponse:
+        try:
+            return await self._client.aio.models.generate_content(
+                model=self.model_name, contents=prompt
+            )
+        except Exception as e:
+            logger.error(f"exception will calling llm : ${e}")
+            raise LLMRequestFailedError()
 
 
 def get_llm_lg(request: Request) -> LLMManager:
