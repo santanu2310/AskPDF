@@ -1,4 +1,5 @@
 from datetime import datetime
+import logging
 from uuid import UUID
 from typing import Annotated
 from fastapi import APIRouter, Depends, Body
@@ -11,10 +12,22 @@ from app.core.dependency import (
     get_optional_user_from_access_token,
     get_id_from_access_token,
 )
-from .schemas import ConversationDetailOut, MessagePayload, Conversation
-from .services import list_conversation, get_conversation, handle_message
+from .schemas import (
+    ConversationDetailOut,
+    MessagePayload,
+    Conversation,
+    UpdateConversation,
+)
+from .services import (
+    list_conversation,
+    get_conversation,
+    handle_message,
+    change_conv_title,
+)
 
 router: APIRouter = APIRouter()
+
+logger = logging.getLogger(__name__)
 
 
 @router.post(path="/message")
@@ -67,3 +80,13 @@ async def get_conversation_details(
         conversation_id=UUID(conversation_id),
         last_updated=last_updated,
     )
+
+
+@router.put("/{conversation_id}")
+async def update_conv_title(
+    payload: Annotated[UpdateConversation, Body(...)],
+    db: AsyncSession = Depends(get_db),
+    user: UserAuthOut = Depends(get_id_from_access_token),
+):
+    logger.error(f"title update data: {payload}")
+    return await change_conv_title(data=payload, db=db, user=user)

@@ -20,7 +20,7 @@ class TokenRevocationError(AppException):
 
 
 class NotFoundError(AppException):
-    """Raised when a user is not found in the database."""
+    """Raised when data is not found in the database."""
 
     def __init__(self, message: str = "Not found"):
         super().__init__(message)

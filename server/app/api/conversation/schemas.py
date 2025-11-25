@@ -63,6 +63,11 @@ class DeleteConversation(BaseModel):
     id: UUID
 
 
+class UpdateConversation(BaseModel):
+    id: UUID
+    title: str
+
+
 class DocumentOut(BaseModel):
     id: UUID
     # Assuming your Document model has a 'file_name' or similar attribute

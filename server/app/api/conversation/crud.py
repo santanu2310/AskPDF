@@ -50,6 +50,38 @@ async def create_conversation(
         raise DatabaseError("Could not create a new conversation.")
 
 
+async def get_conversation_by_id(
+    db: AsyncSession, conversation_id: UUID, user_id: UUID
+) -> Optional[Conversation]:
+    """
+    Retrieves a single conversation by its ID, without its messages or documents.
+
+    Args:
+        db: The AsyncSession instance.
+        conversation_id: The ID of the conversation to retrieve.
+        user_id: The ID of the user who owns the conversation.
+
+    Returns:
+        The Conversation object, or None if not found.
+
+    Raises:
+        DatabaseError: If the database query fails.
+    """
+    try:
+        query = select(Conversation).where(
+            Conversation.id == conversation_id,
+            Conversation.user_id == user_id,
+        )
+        result = await db.execute(query)
+        return result.scalar_one_or_none()
+
+    except SQLAlchemyError as e:
+        logger.error(f"Failed to retrieve conversation {conversation_id}. Error: {e}")
+        raise DatabaseError(
+            f"Database error while fetching conversation '{conversation_id}'."
+        )
+
+
 async def get_conversation_with_messages(
     db: AsyncSession,
     conversation_id: UUID,
@@ -189,7 +221,6 @@ async def get_document_ids_by_conversation(
         conversation = await get_conversation_with_messages(
             db, conversation_id, user_id
         )
-        logger.error(f"{conversation.documents=}")
         if not conversation:
             logger.warning(
                 f"Attempted to get documents from non-existent conversation with id {conversation_id}."
@@ -226,7 +257,7 @@ async def update_conversation_title(
         DatabaseError: If the database operation fails.
     """
     try:
-        conversation = await get_conversation_with_messages(
+        conversation = await get_conversation_by_id(
             db, conversation_id, user_id
         )
         if not conversation:

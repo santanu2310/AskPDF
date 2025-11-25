@@ -6,15 +6,22 @@ from app.core.schemas import UserAuthOut
 from app.core.embedder import Embedder
 from app.core.vector_store import VectorStore
 from app.core.llm import LLMManager
+from app.core.exceptions import NotFoundError
 from app.api.document.crud import associate_document_with_conversation
 
-from .schemas import MessagePayload, MessageResponse, Message as Message_S
+from .schemas import (
+    MessagePayload,
+    MessageResponse,
+    Message as Message_S,
+    UpdateConversation,
+)
 from .crud import (
     create_conversation,
     create_message,
     get_conversations_by_user,
     get_conversation_with_messages,
     get_document_ids_by_conversation,
+    update_conversation_title,
 )
 from .rag import generate_augmented_response, generate_conversation_title
 from .models import Conversation
@@ -46,7 +53,7 @@ async def handle_message(
         file_id = file_ids[0]
     else:
         if not payload.file_id:
-            raise ValueError("file_id is required for a new conversation.")
+            raise NotFoundError(message="file_id is required for a new conversation.")
 
         title = await generate_conversation_title(
             user_query=payload.message, llm=model_sm
@@ -125,10 +132,21 @@ async def get_conversation(
         user_id=UUID(user.user_id),
         last_updated=last_updated,
     )
-    logger.info(f"{db_conversation=}")
 
     if not db_conversation:
         logger.warning(f"Conversation with id {conversation_id} not found.")
-        raise ValueError(f"Conversation with id {conversation_id} does not exist.")
+        raise NotFoundError(
+            message=f"Conversation with id {conversation_id} does not exist."
+        )
 
     return db_conversation
+
+
+async def change_conv_title(
+    data: UpdateConversation,
+    db: AsyncSession,
+    user: UserAuthOut,
+):
+    return await update_conversation_title(
+        db=db, conversation_id=data.id, user_id=UUID(user.user_id), new_title=data.title
+    )
