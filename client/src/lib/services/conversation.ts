@@ -113,3 +113,50 @@ export async function updateConversation(conv_id: string, lastUpdated: string) {
 		console.error('Failed to check for conversation updates:', error);
 	}
 }
+
+export async function changeConvTitle(id: string, title: string): Promise<void> {
+	try {
+		const payload = { id, title };
+		console.log('payload : ', payload);
+		// const response = await authRequest.put(CONVERSATION_ENDPOINTS.GET_CHAT(id), payload);
+
+		const response = await authRequest({
+			method: 'put',
+			url: CONVERSATION_ENDPOINTS.GET_CHAT(id),
+			data: payload
+		});
+		console.log('updatedConversation for title update : ', response.data);
+
+		const conversationUpdate = mapConversation(response.data) as Conversation;
+
+		const currentConvs = get(conversations);
+		const existingConversation = currentConvs.get(id);
+
+		if (!existingConversation) {
+			console.error(
+				`Conversation with id ${id} not found locally. Storing server response directly.`
+			);
+			// Fallback to storing the partial data from server if local copy is missing
+			await indexedDbService.updateRecord('conversation', conversationUpdate);
+			conversations.update((convsMap) => {
+				convsMap.set(conversationUpdate.id, conversationUpdate);
+				return new Map(convsMap);
+			});
+			return;
+		}
+
+		// Merge the existing conversation with the partial update from the server
+		const mergedConversation = { ...existingConversation, ...conversationUpdate };
+
+		// Save the merged conversation to preserve messages and documents
+		await indexedDbService.updateRecord('conversation', mergedConversation);
+
+		conversations.update((convsMap) => {
+			convsMap.set(mergedConversation.id, mergedConversation);
+			return new Map(convsMap);
+		});
+	} catch (error) {
+		console.error(`Failed to update title for conversation ${id}:`, error);
+		throw error;
+	}
+}

@@ -4,10 +4,29 @@
 	import icon from '$lib/assets/icon.png';
 	import { conversations } from '$lib/store/conversation';
 	import { syncConversations } from '$lib/services/conversation';
+	import { changeConvTitle } from '$lib/services/conversation';
+	import Conversation from '$lib/components/Conversation.svelte';
 
 	// Theme state. Defaults to false (light mode).
 	let isDarkMode = $state(false);
 	let isLoading = $state(true);
+
+	// Edit Popup State
+	let isEditPopupOpen = $state(false);
+	let editingConvDetails: { id: string; title: string } | null = $state(null);
+	let editedConvTitle = $state('');
+
+	// A reference to the menu container in Conversation.svelte. This will be null initially,
+	// and will be set when a Conversation component is mounted.
+	// Since Conversation.svelte now handles its own menu state and click outside,
+	// this variable might not be needed here directly unless the layout needs to interact with it.
+	// For now, let's keep it minimal for the layout's specific needs (edit popup).
+	// If the menu itself is still in layout, this will be needed.
+	// But the menu is inside Conversation.svelte, so the menuContainer is local to Conversation.svelte.
+	// Therefore, handleClickOutside here only needs to manage the layout's popup, if any.
+	// However, the original prompt from the user mentioned "the popup menue goes out"
+	// which referred to the small menu. So, the original handleClickOutside was correct for the menu.
+	// Let's re-add the menu's handling in Conversation.svelte.
 
 	onMount(async () => {
 		// Check for saved theme preference in localStorage on component mount.
@@ -47,7 +66,40 @@
 		updateThemeClass(isDarkMode);
 		localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
 	}
+
+	// --- Edit Popup Management ---
+	function openEditPopup(details: { id: string; title: string }) {
+		editingConvDetails = details;
+		editedConvTitle = details.title;
+		isEditPopupOpen = true;
+	}
+
+	function closeEditPopup() {
+		isEditPopupOpen = false;
+		editingConvDetails = null;
+	}
+
+	async function handleUpdateTitle() {
+		if (!editingConvDetails) return;
+		await changeConvTitle(editingConvDetails.id, editedConvTitle);
+		console.log(
+			'Updating conversation:',
+			editingConvDetails.id,
+			'with new title:',
+			editedConvTitle
+		);
+		// TODO: Implement actual update logic (API call and store update)
+		closeEditPopup();
+	}
+
+	function handleKeydown(event: KeyboardEvent) {
+		if (event.key === 'Escape' && isEditPopupOpen) {
+			closeEditPopup();
+		}
+	}
 </script>
+
+<svelte:window on:keydown={handleKeydown} />
 
 <div
 	class:dark={isDarkMode}
@@ -56,14 +108,14 @@
 >
 	<!-- Collapsible Sidebar -->
 	<aside
-		class="group pt-4 w-16 fixed left-0 top-0 z-10 flex h-full flex-col bg-[var(--bg-secondary)] backdrop-blur-lg border-r border-[var(--border-primary)] transition-all duration-300 ease-in-out hover:w-64"
+		class="group/sidebar pt-4 w-16 fixed left-0 top-0 z-10 flex h-full flex-col bg-[var(--bg-secondary)] backdrop-blur-lg border-r border-[var(--border-primary)] transition-all duration-300 ease-in-out hover:w-64"
 	>
 		<div class="flex h-16 items-center rounded-lg overflow-hidden transition-all duration-300 p-2">
 			<div class="h-10 w-12 flex items-center justify-center flex-shrink-0">
 				<img src={icon} alt="" class="w-8 h-8 object-contain" />
 			</div>
 			<span
-				class="ml-1 text-lg font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+				class="ml-1 text-lg font-bold whitespace-nowrap opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300"
 				>AskPDF</span
 			>
 		</div>
@@ -81,7 +133,7 @@
 					<i class="ri-add-fill text-lg"></i>
 				</div>
 				<span
-					class="ml-1 text-sm font-semibold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+					class="ml-1 text-sm font-semibold whitespace-nowrap opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300"
 					>New Chat</span
 				>
 			</a>
@@ -89,7 +141,7 @@
 			<!-- History Section -->
 			<div class="flex flex-col grow pt-4 min-h-0">
 				<h3
-					class="px-2 text-xs font-semibold uppercase text-[var(--text-muted)] hidden group-hover:block"
+					class="px-2 text-xs font-semibold uppercase text-[var(--text-muted)] opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300"
 				>
 					History
 				</h3>
@@ -103,15 +155,15 @@
 						</li>
 					</ul>
 				{:else}
-					<ul class="mt-2 hidden flex-col grow overflow-y-scroll space-y-1 group-hover:flex">
+					<ul
+						class="mt-2 flex flex-col grow overflow-y-auto space-y-1 opacity-0 pointer-events-none group-hover/sidebar:opacity-100 group-hover/sidebar:pointer-events-auto transition-opacity duration-300"
+					>
 						{#each Array.from($conversations.values()) as conversation}
-							<li>
-								<a
-									href="/chat/{conversation.id}"
-									class="block truncate rounded-lg p-2 text-sm text-[var(--text-secondary)] hover:bg-[var(--bg-primary)]"
-									>{conversation.title}
-								</a>
-							</li>
+							<Conversation
+								convId={conversation.id}
+								convTitle={conversation.title}
+								onEdit={openEditPopup}
+							/>
 						{/each}
 					</ul>
 				{/if}
@@ -133,7 +185,7 @@
 					{/if}
 				</div>
 				<span
-					class="ml-1 text-sm font-semibold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+					class="ml-1 text-sm font-semibold whitespace-nowrap opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300"
 				>
 					{isDarkMode ? 'Light Mode' : 'Dark Mode'}
 				</span>
@@ -154,7 +206,7 @@
 						</div>
 					</div>
 					<span
-						class="ml-1 text-sm font-semibold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+						class="ml-1 text-sm font-semibold whitespace-nowrap opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300"
 						>{$user.fullName}</span
 					>
 				{:else}
@@ -176,7 +228,7 @@
 							</svg>
 						</div>
 						<span
-							class="ml-1 text-sm font-semibold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+							class="ml-1 text-sm font-semibold whitespace-nowrap opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300"
 							>Login</span
 						>
 					</a>
@@ -192,4 +244,48 @@
 			<slot></slot>
 		</div>
 	</main>
+
+	<!-- Edit Conversation Title Popup -->
+	{#if isEditPopupOpen}
+		<div
+			class="fixed inset-0 bg-[var(--bg-secondary)] backdrop-blur-lg flex items-center justify-center z-50"
+			onclick={closeEditPopup}
+			role="button"
+			tabindex="0"
+			onkeydown={(e) => {
+				if (e.key === 'Esc') closeEditPopup();
+			}}
+		>
+			<div
+				class="bg-[var(--bg-primary)] p-6 rounded-lg shadow-lg w-xl"
+				onclick={(e) => e.stopPropagation()}
+				role="button"
+				tabindex="0"
+				onkeydown={(e) => {}}
+			>
+				<h3 class="text-xl font-medium mb-12 text-[var(--text-primary)]">
+					Edit Conversation Title
+				</h3>
+				<input
+					type="text"
+					class="w-full p-3.5 mb-8 rounded-md text-base bg-[var(--bg-secondary)] text-[var(--text-primary)] border border-[var(--border-primary)] focus:outline-1 outline-[var(--gradient-accent)]"
+					bind:value={editedConvTitle}
+				/>
+				<div class="flex justify-end space-x-2 text-sm font-semibold text-[var(--text-secondary)]">
+					<button
+						class="px-4 py-2 rounded-md hover:text-[var(--text-primary)]"
+						onclick={closeEditPopup}
+					>
+						Cancel
+					</button>
+					<button
+						class="px-4 py-2 rounded-md hover:text-[var(--text-primary)]"
+						onclick={handleUpdateTitle}
+					>
+						Update
+					</button>
+				</div>
+			</div>
+		</div>
+	{/if}
 </div>
