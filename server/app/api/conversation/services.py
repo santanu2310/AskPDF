@@ -8,6 +8,7 @@ from app.core.vector_store import VectorStore
 from app.core.llm import LLMManager
 from app.core.exceptions import NotFoundError
 from app.api.document.crud import associate_document_with_conversation
+from app.api.document.services import delete_doc
 
 from .schemas import (
     MessagePayload,
@@ -22,6 +23,7 @@ from .crud import (
     get_conversation_with_messages,
     get_document_ids_by_conversation,
     update_conversation_title,
+    delete_conversation,
 )
 from .rag import generate_augmented_response, generate_conversation_title
 from .models import Conversation
@@ -40,7 +42,7 @@ async def handle_message(
     model_lg: LLMManager,
 ) -> MessageResponse:
     created_at_time = None
-    file_id = None
+    file_id = payload.file_id
     logger.error(f"{payload=}")
 
     if payload.conv_id:
@@ -72,6 +74,7 @@ async def handle_message(
         conv_id = conversation.id
         created_at_time = conversation.created_at
 
+    logger.error(f"{file_id=}")
     user_message = await create_message(
         db=db, conversation_id=str(conv_id), content=payload.message, role="user"
     )
@@ -150,3 +153,13 @@ async def change_conv_title(
     return await update_conversation_title(
         db=db, conversation_id=data.id, user_id=UUID(user.user_id), new_title=data.title
     )
+
+
+async def delete_conv(conv_id: UUID, db: AsyncSession, user: UserAuthOut):
+    deleted_conv = await delete_conversation(
+        db=db, conversation_id=conv_id, user_id=UUID(user.user_id)
+    )
+    logger.error(f"{deleted_conv=}")
+    await delete_doc(doc_id=deleted_conv.documents[0].id, user=user, db=db)
+
+    return {"conv_id": deleted_conv.id, "message": "Item deleted successfully"}

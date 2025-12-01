@@ -4,7 +4,7 @@ from uuid import UUID
 from sqlalchemy.future import select
 from sqlalchemy.exc import SQLAlchemyError
 from app.core.db import AsyncSession
-from app.core.exceptions import DatabaseError
+from app.core.exceptions import DatabaseError, NotFoundError
 from app.core.schemas import UserAuthOut
 from .models import TempDocument, Document
 
@@ -89,3 +89,27 @@ async def associate_document_with_conversation(
             f"Failed to associate document {document_id} with conversation {conversation_id}. Error: {e}"
         )
         raise DatabaseError("Could not associate document with conversation.")
+
+
+async def delete_document(
+    document_id: UUID, user: UserAuthOut, db: AsyncSession
+) -> Document:
+    """Delete a document entry from the database."""
+
+    try:
+        document = await get_document(db=db, document_id=document_id, user=user)
+        if not document:
+            logger.warning(
+                f"Attempted to associate non-existent document with id {document_id}."
+            )
+            raise NotFoundError(message=f"Document not found with id: {document_id}")
+
+        await db.delete(document)
+        await db.commit()
+
+        return document
+
+    except SQLAlchemyError as e:
+        await db.rollback()
+        logger.error(f"Failed to delete Document with {document_id=}. Error:{e}")
+        raise DatabaseError("Database error while deleting Document")

@@ -15,3 +15,17 @@ export interface Document {
 	id: string;
 	data: Blob;
 }
+
+export interface DocumentObject {
+	id: string;
+	title: string;
+	createdAt: string;
+}
+
+export function mapDcoumentResponse(serverConversation: any): DocumentObject {
+	return {
+		id: serverConversation.id,
+		title: serverConversation.title,
+		createdAt: serverConversation.updated_at
+	};
+}

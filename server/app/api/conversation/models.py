@@ -13,7 +13,9 @@ class Conversation(BaseModel):
 
     # Relationships
     documents = relationship("Document", back_populates="conversation")
-    messages = relationship("Message", back_populates="conversation")
+    messages = relationship(
+        "Message", back_populates="conversation", cascade="all, delete-orphan"
+    )
 
 
 class Message(BaseModel):

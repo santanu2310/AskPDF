@@ -3,8 +3,9 @@
 		convId: string;
 		convTitle: string;
 		onEdit: (details: { id: string; title: string }) => void;
+		onDelete: (id: string) => void;
 	}
-	let { convId, convTitle, onEdit }: Props = $props();
+	let { convId, convTitle, onEdit, onDelete }: Props = $props();
 
 	let menuContainer: HTMLElement;
 	let isMenuOpen = $state(false);
@@ -70,8 +71,7 @@
 						<button
 							class="w-full text-left pl-4 py-1.5 text-sm hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)]"
 							onclick={() => {
-								// TODO: Implement Delete logic
-								console.log('Deleting conversation:', convId);
+								onDelete(convId);
 								close();
 							}}
 						>

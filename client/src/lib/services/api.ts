@@ -14,7 +14,7 @@ export const AUTH_ENDPOINTS = {
 
 // Chat endpoints
 export const CONVERSATION_ENDPOINTS = {
-	UPLOAD_SESSION: '/docs/upload',
+	UPLOAD_SESSION: '/document/upload',
 	FILE_STATUS: (docId: string): string => `/document/status/${docId}`,
 	FILE_URL: (docId: string): string => `/document/url/${docId}`,
 	NEW_CHAT: '/conversation/new',

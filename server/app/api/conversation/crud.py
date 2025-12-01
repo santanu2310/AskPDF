@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 
-from app.core.exceptions import DatabaseError
+from app.core.exceptions import DatabaseError, NotFoundError
 from .models import Conversation, Message
 
 # Set up a logger for this module
@@ -163,7 +163,7 @@ async def get_conversations_by_user(
 
 async def delete_conversation(
     db: AsyncSession, conversation_id: UUID, user_id: UUID
-) -> bool:
+) -> Conversation:
     """
     Deletes a conversation and its associated messages from the database.
 
@@ -181,16 +181,19 @@ async def delete_conversation(
         conversation = await get_conversation_with_messages(
             db, conversation_id, user_id
         )
+        logger.error(f"{conversation=}")
         if not conversation:
             logger.warning(
                 f"Attempted to delete non-existent conversation with id {conversation_id}."
             )
-            return False
+            raise NotFoundError(
+                message="Conversation with this given id doesnot exist."
+            )
 
         await db.delete(conversation)
         await db.commit()
         logger.info(f"Successfully deleted conversation {conversation_id}.")
-        return True
+        return conversation
 
     except SQLAlchemyError as e:
         await db.rollback()
@@ -225,7 +228,7 @@ async def get_document_ids_by_conversation(
             logger.warning(
                 f"Attempted to get documents from non-existent conversation with id {conversation_id}."
             )
-            return []
+            raise NotFoundError(message="no document found for this conversation")
 
         return [doc.id for doc in conversation.documents]
 
@@ -257,9 +260,7 @@ async def update_conversation_title(
         DatabaseError: If the database operation fails.
     """
     try:
-        conversation = await get_conversation_by_id(
-            db, conversation_id, user_id
-        )
+        conversation = await get_conversation_by_id(db, conversation_id, user_id)
         if not conversation:
             logger.warning(
                 f"Attempted to update non-existent conversation with id {conversation_id}."

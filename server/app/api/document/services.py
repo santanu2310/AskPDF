@@ -5,8 +5,12 @@ from app.core.db import AsyncSession
 from app.core.schemas import UserAuthOut
 from app.core.exceptions import NotFoundError
 
-from .s3_service import create_presigned_upload_url, create_presigned_download_url
-from .crud import createDocs, createTempDocs, get_document
+from .s3_service import (
+    create_presigned_upload_url,
+    create_presigned_download_url,
+    delete_object,
+)
+from .crud import createDocs, createTempDocs, get_document, delete_document
 from .schemas import UploadSession
 
 logger = logging.getLogger(__name__)
@@ -22,6 +26,7 @@ async def create_upload_session(
 
     unique_id = str(uuid.uuid4()) + "-" + title.strip().replace(" ", "_").lower()
     key = f"temp/{unique_id}" if temp else f"docs/{unique_id}"
+    logger.error(f"{key=}")
 
     if user:
         docs = await createDocs(key=key, user=user, title=title, db=db)
@@ -46,3 +51,9 @@ async def create_download_url(doc_id: uuid.UUID, user: UserAuthOut, db: AsyncSes
     if not doc:
         raise NotFoundError(message=f"No file found with id: {doc_id}")
     return create_presigned_download_url(doc.key)
+
+
+async def delete_doc(doc_id: uuid.UUID, user: UserAuthOut, db: AsyncSession):
+    deleted_doc = await delete_document(document_id=doc_id, user=user, db=db)
+    await delete_object(key=deleted_doc.key)
+    return delete_document

@@ -11,6 +11,7 @@ export async function sendMessage(
 	convId: string | null = null
 ): Promise<MessageResponse> {
 	const docId = get(uploadedDocumentId);
+	console.log('document ID: ', docId);
 
 	if (!docId && !convId) {
 		throw new Error('No document ID and conv found to send message.');
@@ -52,6 +53,7 @@ export async function syncConversations(): Promise<Conversation[]> {
 		}
 	});
 
+	console.log('server response:', response.data);
 	const serverConversations = response.data.map(mapConversation) as Conversation[];
 	console.log('serverConversations', serverConversations);
 
@@ -157,6 +159,47 @@ export async function changeConvTitle(id: string, title: string): Promise<void> 
 		});
 	} catch (error) {
 		console.error(`Failed to update title for conversation ${id}:`, error);
+		throw error;
+	}
+}
+
+export async function deleteConversation(id: string): Promise<void> {
+	try {
+		const conversationToDelete = await indexedDbService.getRecord<Conversation>('conversation', id);
+
+		const response = await authRequest.delete(CONVERSATION_ENDPOINTS.GET_CHAT(id));
+
+		console.log('delete response:', response);
+		console.log('conversation to delete: ', conversationToDelete);
+
+		if (conversationToDelete && conversationToDelete.documents) {
+			try {
+				// const currentDocId = get(uploadedDocumentId);
+				for (const doc of conversationToDelete.documents) {
+					await indexedDbService.deleteRecord('document', doc.id);
+					// if (currentDocId === doc.id) {
+					// 	uploadedDocumentId.set(null);
+					// 	uploadedDocumentName.set(null);
+					// }
+				}
+			} catch (error) {
+				console.error('no file found');
+			}
+		}
+
+		await indexedDbService.deleteRecord('conversation', id);
+
+		conversations.update((convsMap) => {
+			convsMap.delete(id);
+			return new Map(convsMap);
+		});
+
+		const currentConv = get(currentConversation);
+		if (currentConv === id) {
+			currentConversation.set(null);
+		}
+	} catch (error) {
+		console.error(`Failed to delete conversation ${id}:`, error);
 		throw error;
 	}
 }

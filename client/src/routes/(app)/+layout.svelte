@@ -4,7 +4,7 @@
 	import icon from '$lib/assets/icon.png';
 	import { conversations } from '$lib/store/conversation';
 	import { syncConversations } from '$lib/services/conversation';
-	import { changeConvTitle } from '$lib/services/conversation';
+	import { changeConvTitle, deleteConversation } from '$lib/services/conversation';
 	import Conversation from '$lib/components/Conversation.svelte';
 
 	// Theme state. Defaults to false (light mode).
@@ -14,6 +14,7 @@
 	// Edit Popup State
 	let isEditPopupOpen = $state(false);
 	let editingConvDetails: { id: string; title: string } | null = $state(null);
+	let deleteConvId: string | null = $state(null);
 	let editedConvTitle = $state('');
 
 	// A reference to the menu container in Conversation.svelte. This will be null initially,
@@ -73,22 +74,26 @@
 		editedConvTitle = details.title;
 		isEditPopupOpen = true;
 	}
+	function openDeletePopup(id: string) {
+		deleteConvId = id;
+		isEditPopupOpen = true;
+	}
 
 	function closeEditPopup() {
 		isEditPopupOpen = false;
+		deleteConvId = null;
 		editingConvDetails = null;
 	}
 
 	async function handleUpdateTitle() {
 		if (!editingConvDetails) return;
 		await changeConvTitle(editingConvDetails.id, editedConvTitle);
-		console.log(
-			'Updating conversation:',
-			editingConvDetails.id,
-			'with new title:',
-			editedConvTitle
-		);
-		// TODO: Implement actual update logic (API call and store update)
+		closeEditPopup();
+	}
+
+	async function handleDelete() {
+		if (!deleteConvId) return;
+		await deleteConversation(deleteConvId);
 		closeEditPopup();
 	}
 
@@ -163,6 +168,7 @@
 								convId={conversation.id}
 								convTitle={conversation.title}
 								onEdit={openEditPopup}
+								onDelete={openDeletePopup}
 							/>
 						{/each}
 					</ul>
@@ -263,28 +269,53 @@
 				tabindex="0"
 				onkeydown={(e) => {}}
 			>
-				<h3 class="text-xl font-medium mb-12 text-[var(--text-primary)]">
-					Edit Conversation Title
-				</h3>
-				<input
-					type="text"
-					class="w-full p-3.5 mb-8 rounded-md text-base bg-[var(--bg-secondary)] text-[var(--text-primary)] border border-[var(--border-primary)] focus:outline-1 outline-[var(--gradient-accent)]"
-					bind:value={editedConvTitle}
-				/>
-				<div class="flex justify-end space-x-2 text-sm font-semibold text-[var(--text-secondary)]">
-					<button
-						class="px-4 py-2 rounded-md hover:text-[var(--text-primary)]"
-						onclick={closeEditPopup}
+				{#if editingConvDetails}
+					<h3 class="text-xl font-medium mb-12 text-[var(--text-primary)]">
+						Edit Conversation Title
+					</h3>
+					<input
+						type="text"
+						class="w-full p-3.5 mb-8 rounded-md text-base bg-[var(--bg-secondary)] text-[var(--text-primary)] border border-[var(--border-primary)] focus:outline-1 outline-[var(--gradient-accent)]"
+						bind:value={editedConvTitle}
+					/>
+					<div
+						class="flex justify-end space-x-2 text-sm font-semibold text-[var(--text-secondary)]"
 					>
-						Cancel
-					</button>
-					<button
-						class="px-4 py-2 rounded-md hover:text-[var(--text-primary)]"
-						onclick={handleUpdateTitle}
+						<button
+							class="px-4 py-2 rounded-md hover:text-[var(--text-primary)]"
+							onclick={closeEditPopup}
+						>
+							Cancel
+						</button>
+						<button
+							class="px-4 py-2 rounded-md hover:text-[var(--text-primary)]"
+							onclick={handleUpdateTitle}
+						>
+							Update
+						</button>
+					</div>
+				{:else}
+					<h3 class="text-xl font-medium mb-10 text-[var(--text-primary)]">Delete chat?</h3>
+					<span class="mb-8 block text-sm font-normal"
+						>This will delete all the messages and the document associated with this conversation.</span
 					>
-						Update
-					</button>
-				</div>
+					<div
+						class="flex justify-end space-x-2 text-sm font-semibold text-[var(--text-secondary)]"
+					>
+						<button
+							class="px-4 py-2 rounded-md hover:text-[var(--text-primary)]"
+							onclick={closeEditPopup}
+						>
+							Cancel
+						</button>
+						<button
+							class="px-4 py-2 rounded-md hover:text-[var(--text-primary)]"
+							onclick={handleDelete}
+						>
+							Delete
+						</button>
+					</div>
+				{/if}
 			</div>
 		</div>
 	{/if}

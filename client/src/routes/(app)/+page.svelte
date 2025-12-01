@@ -4,6 +4,7 @@
 	let files = $state<FileList | undefined>(undefined);
 	let isUploading = $state(false);
 	let errorMessage = $state('');
+	let fileInput: HTMLInputElement;
 
 	$effect(() => {
 		if (files?.[0] && !isUploading) {
@@ -23,6 +24,9 @@
 
 		files = undefined;
 		isUploading = false;
+		if (fileInput) {
+			fileInput.value = ''; // Clear the file input
+		}
 	}
 </script>
 
@@ -74,6 +78,7 @@
 					accept=".pdf"
 					disabled={isUploading}
 					bind:files
+					bind:this={fileInput}
 				/>
 			</label>
 

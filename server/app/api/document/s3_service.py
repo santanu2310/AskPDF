@@ -1,6 +1,9 @@
 # import uuid
 import logging
 import boto3
+from typing import cast
+from aiobotocore.session import get_session
+from aiobotocore.client import AioBaseClient
 from botocore.config import Config
 from botocore.exceptions import ClientError
 
@@ -73,3 +76,32 @@ def create_presigned_download_url(key: str):
     except ClientError as e:
         logger.error(f"Failed to generate presigned URL: {e}")
         raise S3ServiceError("Failed to generate presigned URL")
+
+
+async def delete_object(key: str):
+    try:
+        async with get_session().create_client(
+            "s3",
+            aws_access_key_id=settings.AWS_ACCESS_KEY,
+            aws_secret_access_key=settings.AWS_SECRET_KEY,
+            region_name="ap-south-1",
+            config=Config(signature_version="s3v4"),
+        ) as s3_client_untyped:
+            s3_client: AioBaseClient = cast(AioBaseClient, s3_client_untyped)
+
+            # s3_client = boto3.client(
+            #     "s3",
+            #     aws_access_key_id=settings.AWS_ACCESS_KEY,
+            #     aws_secret_access_key=settings.AWS_SECRET_KEY,
+            #     region_name="ap-south-1",
+            #     config=Config(signature_version="s3v4"),
+            # )
+            # Generate a presigned GET URL
+            await s3_client.delete_object(Bucket=settings.BUCKET_NAME, Key=key)  # type: ignore
+
+            return True
+
+    except ClientError as e:
+        logger.error(f"Failed to delete object: {e}")
+        # raise S3ServiceError("Failed to delete file")
+        return False

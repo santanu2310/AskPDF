@@ -2,6 +2,7 @@
 	import { onMount, tick } from 'svelte';
 	import { marked } from 'marked';
 	import { get } from 'svelte/store';
+	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { uploadedDocumentId } from '$lib/store/document';
 	import DocumentViewer from '$lib/components/DocumentViewer.svelte';
@@ -16,52 +17,45 @@
 	import { indexedDbService } from '$lib/services/indexedDb';
 
 	let chatContainer: HTMLDivElement;
-	const chatId = page.params.chatId;
 
+	let chatId = $state(page.params.chatId);
 	let userInput = $state('');
 	let documentId = $state<string | null>(null);
 	let isTemp = $state(false);
 	let query = $state<string | null>(null);
-
-	if (chatId == 'new') {
-		currentConversation.set(null);
-	} else if (chatId) {
-		currentConversation.set(chatId);
-	}
+	let firstMessage = false;
 
 	const conversation = $derived(chatId ? $conversations.get(chatId) : undefined);
-
 	let messages: Message[] = $derived(conversation?.messages ?? []);
 
-	onMount(() => {
-		const convId = $currentConversation;
-		if (!convId) return;
+	const fetchUpdates = async (convId: string) => {
+		// Read from the store non-reactively using get() to prevent a dependency.
+		const conversation = get(conversations).get(convId);
+		let lastUpdated = new Date(0);
 
-		const fetchUpdates = async () => {
-			// Read from the store non-reactively using get() to prevent a dependency.
-			const conversation = get(conversations).get(convId);
-			let lastUpdated = new Date(0);
-
-			if (conversation && conversation.messages.length > 0) {
-				lastUpdated = conversation.messages.reduce((max, msg) => {
-					const msgDate = new Date(msg.timeStamp);
-					return msgDate > new Date(max) ? msgDate : max;
-				}, lastUpdated);
-			}
-			await updateConversation(convId, lastUpdated.toISOString());
-		};
-
-		fetchUpdates();
-	});
+		if (conversation && conversation.messages.length > 0) {
+			lastUpdated = conversation.messages.reduce((max, msg) => {
+				const msgDate = new Date(msg.timeStamp);
+				return msgDate > new Date(max) ? msgDate : max;
+			}, lastUpdated);
+		}
+		await updateConversation(convId, lastUpdated.toISOString());
+	};
 
 	$effect(() => {
 		documentId = conversation?.documents[0].id as string;
 	});
 
 	$effect(() => {
+		chatId = page.params.chatId;
 		if (chatId === 'new') {
 			documentId = $uploadedDocumentId || '';
 			isTemp = false; // Assuming uploaded documents go to 'document' store
+			firstMessage = true;
+			currentConversation.set(null);
+		} else if (chatId && !firstMessage) {
+			currentConversation.set(chatId);
+			fetchUpdates(chatId);
 		}
 	});
 
@@ -86,6 +80,7 @@
 		query = trimmedInput;
 		userInput = '';
 		scrollToBottom();
+		console.log('from handleSendMessage, currentConversation: ', $currentConversation);
 		const response: MessageResponse = await sendMessage(trimmedInput, $currentConversation);
 
 		if (!$currentConversation) {
@@ -93,16 +88,20 @@
 				id: response.conversationId,
 				title: trimmedInput,
 				messages: [response.userMessage, response.assistantMessage],
-				documents: [response.fileId as string],
+				documents: [{ id: response.fileId as string, title: '', createdAt: '' }],
 				createdAt: response.createdAt as string,
 				updatedAt: response.updatedAt as string
 			};
+
+			console.log('from handleSendMessage, conversation: ', conv);
 
 			await indexedDbService.addRecord('conversation', conv);
 			addConversation(conv);
 
 			uploadedDocumentId.set(null);
-			page.params.chatId = response.conversationId;
+			firstMessage = false;
+			goto(`/chat/${response.conversationId}`, { replaceState: true });
+			currentConversation.set(response.conversationId);
 		} else {
 			const conv: Conversation | undefined = addMessageToConversation(response.conversationId, [
 				response.userMessage,
@@ -112,9 +111,8 @@
 			if (!conv) return new Error('Conversation is not abailable locally');
 
 			await indexedDbService.updateRecord('conversation', conv);
-			query = null;
 		}
-
+		query = null;
 		scrollToBottom();
 	}
 

@@ -1,3 +1,5 @@
+import { mapDcoumentResponse, type DocumentObject } from './document';
+
 interface Citation {
 	text: string;
 	source: string;
@@ -16,7 +18,7 @@ export interface Conversation {
 	id: string;
 	title: string;
 	messages: Array<Message>;
-	documents: Array<string>;
+	documents: Array<DocumentObject>;
 	createdAt: string;
 	updatedAt: string;
 }
@@ -37,7 +39,7 @@ export function mapConversation(serverConversation: any): Conversation {
 		id: serverConversation.id,
 		title: serverConversation.title,
 		messages: serverConversation.messages?.map(mapMessage) || [],
-		documents: serverConversation.documents || [],
+		documents: serverConversation.documents?.map(mapDcoumentResponse) || [],
 		createdAt: serverConversation.created_at,
 		updatedAt: serverConversation.updated_at
 	};

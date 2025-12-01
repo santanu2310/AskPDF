@@ -104,12 +104,12 @@ class IndexedDbService {
 		});
 	}
 
-	async getRecord(storeName: string, id: string): Promise<object> {
+	async getRecord<T>(storeName: string, id: string): Promise<T | undefined> {
 		if (!this.db) {
 			await this.openDb();
 		}
 
-		return new Promise<object>((resolve, rejects) => {
+		return new Promise<T | undefined>((resolve, rejects) => {
 			if (!this.db) {
 				rejects(new Error('Database is not open.'));
 				return;

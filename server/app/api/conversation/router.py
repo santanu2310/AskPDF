@@ -23,6 +23,7 @@ from .services import (
     get_conversation,
     handle_message,
     change_conv_title,
+    delete_conv,
 )
 
 router: APIRouter = APIRouter()
@@ -83,10 +84,19 @@ async def get_conversation_details(
 
 
 @router.put("/{conversation_id}")
-async def update_conv_title(
+async def update_conversation_title(
     payload: Annotated[UpdateConversation, Body(...)],
     db: AsyncSession = Depends(get_db),
     user: UserAuthOut = Depends(get_id_from_access_token),
 ):
     logger.error(f"title update data: {payload}")
     return await change_conv_title(data=payload, db=db, user=user)
+
+
+@router.delete("/{conversation_id}")
+async def delete_conversation(
+    conversation_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    user: UserAuthOut = Depends(get_id_from_access_token),
+):
+    return await delete_conv(conv_id=conversation_id, db=db, user=user)
