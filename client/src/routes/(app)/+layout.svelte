@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { user } from '$lib/store/user';
+	import { goto } from '$app/navigation';
 	import icon from '$lib/assets/icon.png';
 	import { conversations } from '$lib/store/conversation';
 	import { syncConversations } from '$lib/services/conversation';
@@ -95,6 +96,7 @@
 		if (!deleteConvId) return;
 		await deleteConversation(deleteConvId);
 		closeEditPopup();
+		goto('/');
 	}
 
 	function handleKeydown(event: KeyboardEvent) {

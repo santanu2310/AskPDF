@@ -50,7 +50,6 @@ async def generate_augmented_response(
                 for doc, meta in zip(results["documents"][0], results["metadatas"][0])
             ],
         }
-        logger.error(f"{answar=}")
         return RAGResponse.model_validate(answar)
 
     except Exception as e:

@@ -23,6 +23,7 @@
 	let documentId = $state<string | null>(null);
 	let isTemp = $state(false);
 	let query = $state<string | null>(null);
+	let error = $state<boolean | null>(false);
 	let firstMessage = false;
 
 	const conversation = $derived(chatId ? $conversations.get(chatId) : undefined);
@@ -74,46 +75,55 @@
 	 * - Scrolls the chat to the bottom after sending the message.
 	 */
 	async function handleSendMessage() {
-		const trimmedInput = userInput.trim();
-		if (!trimmedInput) return;
-
-		query = trimmedInput;
-		userInput = '';
-		scrollToBottom();
-		console.log('from handleSendMessage, currentConversation: ', $currentConversation);
-		const response: MessageResponse = await sendMessage(trimmedInput, $currentConversation);
-
-		if (!$currentConversation) {
-			const conv: Conversation = {
-				id: response.conversationId,
-				title: trimmedInput,
-				messages: [response.userMessage, response.assistantMessage],
-				documents: [{ id: response.fileId as string, title: '', createdAt: '' }],
-				createdAt: response.createdAt as string,
-				updatedAt: response.updatedAt as string
-			};
-
-			console.log('from handleSendMessage, conversation: ', conv);
-
-			await indexedDbService.addRecord('conversation', conv);
-			addConversation(conv);
-
-			uploadedDocumentId.set(null);
-			firstMessage = false;
-			goto(`/chat/${response.conversationId}`, { replaceState: true });
-			currentConversation.set(response.conversationId);
-		} else {
-			const conv: Conversation | undefined = addMessageToConversation(response.conversationId, [
-				response.userMessage,
-				response.assistantMessage
-			]);
-
-			if (!conv) return new Error('Conversation is not abailable locally');
-
-			await indexedDbService.updateRecord('conversation', conv);
+		if (!query) {
+			const trimmedInput = userInput.trim();
+			if (!trimmedInput) return;
+			query = trimmedInput;
 		}
-		query = null;
+
+		error = false;
+		userInput = '';
+
 		scrollToBottom();
+		try {
+			const response: MessageResponse = await sendMessage(query, $currentConversation);
+
+			if (!$currentConversation) {
+				const conv: Conversation = {
+					id: response.conversationId,
+					title: query,
+					messages: [response.userMessage, response.assistantMessage],
+					documents: [{ id: response.fileId as string, title: '', createdAt: '' }],
+					createdAt: response.createdAt as string,
+					updatedAt: response.updatedAt as string
+				};
+
+				console.log('from handleSendMessage, conversation: ', conv);
+
+				await indexedDbService.addRecord('conversation', conv);
+				addConversation(conv);
+
+				uploadedDocumentId.set(null);
+				firstMessage = false;
+				goto(`/chat/${response.conversationId}`, { replaceState: true });
+				currentConversation.set(response.conversationId);
+			} else {
+				const conv: Conversation | undefined = addMessageToConversation(response.conversationId, [
+					response.userMessage,
+					response.assistantMessage
+				]);
+
+				if (!conv) return new Error('Conversation is not abailable locally');
+
+				await indexedDbService.updateRecord('conversation', conv);
+			}
+
+			query = null;
+		} catch {
+			error = true;
+		} finally {
+			scrollToBottom();
+		}
 	}
 
 	async function handleKeydown(e: KeyboardEvent) {
@@ -180,27 +190,69 @@
 						<p>{query}</p>
 					</div>
 				</div>
-				<div class="w-full pr-5 flex items-start gap-3">
-					<div
-						class="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-[var(--primary)] text-xl"
-					>
-						<i class="ri-gemini-fill"></i>
+				{#if error}
+					<div class="w-full flex justify-start">
+						<div
+							class="flex h-7 w-7 mr-4 flex-shrink-0 items-center justify-center rounded-full text-[var(--primary)] text-xl"
+						>
+							<i class="ri-gemini-fill"></i>
+						</div>
+						<div class="flex items-center px-4 py-2 rounded-xl bg-[var(--bg-error)]">
+							<span class="flex items-center text-red-500 text-sm"
+								><i class="ri-error-warning-line text-xl mr-2"></i> Some error occur.</span
+							>
+							<button
+								class="w-20 h-9 text-sm flex cursor-pointer items-center justify-center ml-5 bg-[var(--bg-primary)] rounded-full text-[var(--text-primary)] font-medium border border-[var(--border-secondary)]"
+								onclick={handleSendMessage}
+							>
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									width="20"
+									height="20"
+									fill="currentColor"
+									class="bi bi-arrow-clockwise mr-2"
+									viewBox="0 0 16 16"
+								>
+									<path
+										fill-rule="evenodd"
+										d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2z"
+									/>
+									<path
+										d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466"
+									/>
+								</svg> Retry
+							</button>
+							<button
+								class="w-9 h-9 rounded-full text-[var(--text-primary)] bg-[var(--bg-secondary)] ml-2 hidden"
+								aria-label="edit message"
+							>
+								<i class="ri-pencil-line"></i>
+							</button>
+						</div>
 					</div>
-					<div class="w-full rounded-xl rounded-tl-none text-base leading-7">
-						<ul class="w-full space-y-1 animate-pulse">
-							<li>
-								<p
-									class="w-4/5 h-6 block truncate rounded-lg bg-linear-to-r from-[var(--bg-primary)] to-[var(--bg-secondary)]"
-								></p>
-							</li>
-							<li>
-								<p
-									class="w-3/5 h-6 mt-2 block truncate rounded-lg bg-linear-to-r from-[var(--bg-primary)] to-[var(--bg-secondary)]"
-								></p>
-							</li>
-						</ul>
+				{:else}
+					<div class="w-full pr-5 flex items-start gap-3">
+						<div
+							class="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-[var(--primary)] text-xl"
+						>
+							<i class="ri-gemini-fill"></i>
+						</div>
+						<div class="w-full rounded-xl rounded-tl-none text-base leading-7">
+							<ul class="w-full space-y-1 animate-pulse">
+								<li>
+									<p
+										class="w-4/5 h-6 block truncate rounded-lg bg-linear-to-r from-[var(--bg-primary)] to-[var(--bg-secondary)]"
+									></p>
+								</li>
+								<li>
+									<p
+										class="w-3/5 h-6 mt-2 block truncate rounded-lg bg-linear-to-r from-[var(--bg-primary)] to-[var(--bg-secondary)]"
+									></p>
+								</li>
+							</ul>
+						</div>
 					</div>
-				</div>
+				{/if}
 			{/if}
 		</div>
 

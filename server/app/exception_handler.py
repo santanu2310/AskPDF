@@ -9,6 +9,7 @@ from app.core.exceptions import (
     AuthenticationError,
     DatabaseError,
     S3ServiceError,
+    MessageProcessingError,
 )
 
 
@@ -34,6 +35,10 @@ async def s3_service_error_handler(request: Request, exc: Exception):
     return JSONResponse(status_code=400, content={"detail": str(exc)})
 
 
+async def message_processing_error_handler(request: Request, exc: Exception):
+    return JSONResponse(status_code=422, content={"detail": str(exc)})
+
+
 async def authentication_error_handler(request: Request, exc: Exception):
     return JSONResponse(status_code=401, content={"detail": "Authentication failed"})
 
@@ -49,6 +54,7 @@ async def webhook_exception_handler(request: Request, exc: WebhookBaseException)
     )
 
 
+# TODO: Some exception handler are not added.
 def add_exception_handlers(app: FastAPI) -> None:
     app.add_exception_handler(TokenRevocationError, token_revocation_handler)
     app.add_exception_handler(NotFoundError, user_not_found_handler)
@@ -57,3 +63,4 @@ def add_exception_handlers(app: FastAPI) -> None:
     app.add_exception_handler(DatabaseError, database_error_handler)
     app.add_exception_handler(S3ServiceError, s3_service_error_handler)
     app.add_exception_handler(WebhookBaseException, webhook_exception_handler)  # type: ignore
+    app.add_exception_handler(MessageProcessingError, message_processing_error_handler)

@@ -9,6 +9,7 @@ from app.core.llm import LLMManager
 from app.core.exceptions import NotFoundError
 from app.api.document.crud import associate_document_with_conversation
 from app.api.document.services import delete_doc
+from app.core.exceptions import MessageProcessingError
 
 from .schemas import (
     MessagePayload,
@@ -43,15 +44,12 @@ async def handle_message(
 ) -> MessageResponse:
     created_at_time = None
     file_id = payload.file_id
-    logger.error(f"{payload=}")
 
     if payload.conv_id:
         conv_id = payload.conv_id
-        logger.error(f"{conv_id=}")
         file_ids = await get_document_ids_by_conversation(
             db=db, conversation_id=conv_id, user_id=UUID(user.user_id)
         )
-        logger.error(f"{file_ids=}")
         file_id = file_ids[0]
     else:
         if not payload.file_id:
@@ -60,7 +58,6 @@ async def handle_message(
         title = await generate_conversation_title(
             user_query=payload.message, llm=model_sm
         )
-        logger.error(f"{title=}")
 
         conversation = await create_conversation(
             db=db, user_id=user.user_id, title=title
@@ -74,7 +71,6 @@ async def handle_message(
         conv_id = conversation.id
         created_at_time = conversation.created_at
 
-    logger.error(f"{file_id=}")
     user_message = await create_message(
         db=db, conversation_id=str(conv_id), content=payload.message, role="user"
     )

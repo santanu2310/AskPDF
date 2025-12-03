@@ -38,6 +38,7 @@
 	/* Background Colors */
 	--bg-primary: #0f1112; /* gray-900 */
 	--bg-secondary: #171b1cd9; /* gray-800/60 */
+	--bg-error: rgba(228, 17, 17, 0.14);
 
 	/* Text Colors */
 	--text-primary: #f3f4f6; /* gray-100 */
@@ -50,7 +51,7 @@
 
 	/* Border Colors */
 	--border-primary: rgba(55, 65, 81, 0.5); /* gray-700/50 */
-	--border-secondary: #d1d5db; /* gray-300 */
+	--border-secondary: rgba(149, 149, 149, 0.4); /* gray-300 */
 	--border-error: #dc2626; /* red-600 */
 
 	/* Gradient Colors */
