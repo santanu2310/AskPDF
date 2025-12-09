@@ -47,7 +47,7 @@
 				<img src={icon} alt="" />
 			</div>
 			<h2 style="color: var(--text-primary);" class="mt-6 text-3xl font-bold tracking-tight">
-				Welcome Back
+				Welcome
 			</h2>
 			<p style="color: var(--text-secondary);" class="mt-2 text-sm">
 				Sign in to access your account

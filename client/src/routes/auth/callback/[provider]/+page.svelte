@@ -4,6 +4,7 @@
 	import { goto } from '$app/navigation';
 	import { user } from '$lib/store/user';
 	import { exchangeCoceForToken } from '$lib/services/auth';
+	import type { AuthProvider } from '$lib/types/user';
 
 	let isProcessing = $state(true);
 	let errorMessage = $state('');
@@ -17,6 +18,7 @@
 			const code = $page.url.searchParams.get('code');
 			const state = $page.url.searchParams.get('state');
 			const error = $page.url.searchParams.get('error');
+			const provider: string | undefined = $page.params.provider;
 
 			if (error) {
 				errorMessage = 'Authentication failed. Please try again.';
@@ -24,12 +26,12 @@
 				return;
 			}
 
-			if (!code || !state) {
+			if (!code || !state || !provider) {
 				errorMessage = 'Invalid authentication response.';
 				isProcessing = false;
 				return;
 			}
-			const result = await exchangeCoceForToken(code, state);
+			const result = await exchangeCoceForToken(code, state, provider as AuthProvider);
 			user.set(result);
 			goto('/');
 		} catch (error) {

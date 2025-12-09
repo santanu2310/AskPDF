@@ -20,3 +20,5 @@ export function mapUser(apiData: UserApiResponse): User {
 		profilePicUrl: apiData.profile_pic_url
 	};
 }
+
+export type AuthProvider = 'google' | 'github';

@@ -9,9 +9,13 @@ import { type User, mapUser } from '$lib/types/user';
  * @returns {Promise<User>} A promise that resolves to the mapped User object.
  * @throws Will throw an error if the API call fails.
  */
-export async function exchangeCoceForToken(code: string, state: string): Promise<User> {
+export async function exchangeCoceForToken(
+	code: string,
+	state: string,
+	provider: 'google' | 'github'
+): Promise<User> {
 	try {
-		const response = await authRequest.post(AUTH_ENDPOINTS.EXCHANGE_CODE, {
+		const response = await authRequest.post(AUTH_ENDPOINTS.EXCHANGE_CODE(provider), {
 			code,
 			state
 		});

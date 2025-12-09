@@ -6,31 +6,29 @@ from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
+from app.api.user.schemas import OauthUserData
 from app.core.exceptions import NotFoundError, TokenRevocationError, DatabaseError
 from .models import User, RevokedRefToken
 
 logger = logging.getLogger(name=__name__)
 
 
-async def get_or_create_user(user_info: dict, db: AsyncSession) -> User:
+async def get_or_create_user(user_info: OauthUserData, db: AsyncSession) -> User:
     """Get existing user or create new user from Google user info"""
-
-    email = user_info.get("email")
-
-    if not email:
-        raise HTTPException(status_code=400, detail="Email not provided by Google")
 
     try:
         # Check if user exists
-        result = await db.execute(select(User).filter(User.email == email))
+        result = await db.execute(select(User).filter(User.email == user_info.email))
         user = result.scalar_one_or_none()
+
+        # TODO: if user exists update the profile pic
 
         if not user:
             # Create new user
             user = User(
-                email=email,
-                full_name=user_info.get("name", ""),
-                profile_pic_url=user_info.get("picture", ""),
+                email=user_info.email,
+                full_name=user_info.full_name,
+                profile_pic_url=user_info.profile_pic_url,
             )
 
             db.add(user)

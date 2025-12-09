@@ -6,7 +6,7 @@ export const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 // Auth endpoints
 export const AUTH_ENDPOINTS = {
 	OAUTH_URL: (provider: string) => `/auth/authorize/${provider}`,
-	EXCHANGE_CODE: '/auth/exchange/',
+	EXCHANGE_CODE: (provider: 'google' | 'github'): string => `/auth/exchange/${provider}`,
 	LOGOUT: '/auth/logout',
 	ME: '/auth/me',
 	REFRESH: '/auth/refresh'

@@ -23,6 +23,10 @@ class Settings(BaseSettings):
     GOOGLE_OAUTH2_PROJECT_ID: str = ""
     GOOGLE_OAUTH_REDIRECT_URI: str = "http://localhost:5173/auth/callback"
 
+    GITHUB_OAUTH_REDIRECT_URI: str = ""
+    GITHUB_OAUTH2_CLIENT_ID: str = ""
+    GITHUB_OAUTH2_CLIENT_SECRET: str = ""
+
     # JWT Configuration
     JWT_ACCESS_SECRET_KEY: str = ""
     JWT_REFRESH_SECRET_KEY: str = ""

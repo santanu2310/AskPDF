@@ -1,9 +1,12 @@
 import logging
+import secrets
+import urllib.parse
 from typing import Optional, Tuple
 
 import google_auth_oauthlib.flow
 import requests
 from app.core.config import settings
+from .schemas import OauthUserData
 
 logger = logging.getLogger(__name__)
 
@@ -181,7 +184,7 @@ class GoogleSdkLoginFlowService:
                 f"Failed to obtain token from Google: {exc}"
             ) from exc
 
-    def get_user_info(self, *, google_token: GoogleAccessToken) -> dict:
+    def get_user_info(self, *, google_token: GoogleAccessToken) -> OauthUserData:
         """
         Retrieve user information using access token.
 
@@ -189,7 +192,7 @@ class GoogleSdkLoginFlowService:
             google_token: GoogleAccessToken instance
 
         Returns:
-            dict: User information from Google
+            OauthUserData: User information from Google
         """
         if not google_token.access_token:
             raise ApplicationError("Access token is required")
@@ -209,7 +212,15 @@ class GoogleSdkLoginFlowService:
             logger.info(
                 f"Successfully retrieved user info for user: {user_info.get('email', 'unknown')}"
             )
-            return user_info
+
+            if not user_info.get("email"):
+                raise ApplicationError("Email not found in Google user info")
+
+            return OauthUserData(
+                email=user_info["email"],
+                full_name=user_info.get("name", ""),
+                profile_pic_url=user_info.get("picture", ""),
+            )
 
         except requests.RequestException as exc:
             logger.error(f"Failed to retrieve user info from Google: {exc}")
@@ -258,3 +269,216 @@ class GoogleSdkLoginFlowService:
         except requests.RequestException as exc:
             logger.error(f"Failed to refresh access token: {exc}")
             raise ApplicationError(f"Failed to refresh access token: {exc}") from exc
+
+
+class GithubAccessToken:
+    """Container for Github OAuth tokens"""
+
+    def __init__(self, access_token: str):
+        self.access_token = access_token
+
+
+class GithubCredentials:
+    """Container for Github OAuth credentials"""
+
+    def __init__(self, client_id: str, client_secret: str):
+        self.client_id = client_id
+        self.client_secret = client_secret
+
+
+def github_sdk_login_get_credentials() -> GithubCredentials:
+    """
+    Retrieve Github OAuth credentials from settings.
+    """
+    try:
+        return GithubCredentials(
+            client_id=settings.GITHUB_OAUTH2_CLIENT_ID,
+            client_secret=settings.GITHUB_OAUTH2_CLIENT_SECRET,
+        )
+    except AttributeError as e:
+        raise ApplicationError(f"Missing Github OAuth configuration in settings: {e}")
+
+
+class GithubSdkLoginFlowService:
+    """Service for handling Github OAuth 2.0 authentication flow"""
+
+    # Github OAuth 2.0 endpoints
+    GITHUB_AUTH_URL = "https://github.com/login/oauth/authorize"
+    GITHUB_ACCESS_TOKEN_OBTAIN_URL = "https://github.com/login/oauth/access_token"
+    GITHUB_USER_INFO_URL = "https://api.github.com/user"
+    GITHUB_USER_EMAILS_URL = "https://api.github.com/user/emails"
+
+    # OAuth scopes
+    SCOPES = ["read:user", "user:email"]
+
+    def __init__(self):
+        self._credential = github_sdk_login_get_credentials()
+        self._validate_settings()
+
+    def _validate_settings(self):
+        """Validate required settings are present"""
+        if not hasattr(settings, "GITHUB_OAUTH_REDIRECT_URI"):
+            raise ApplicationError(
+                "GITHUB_OAUTH_REDIRECT_URI must be defined in settings"
+            )
+
+        if not self._credential.client_id or not self._credential.client_secret:
+            raise ApplicationError(
+                "Github OAuth client_id and client_secret must be configured"
+            )
+
+    def _get_redirect_uri(self) -> str:
+        """
+        Get the redirect URI for OAuth callback.
+        This should match exactly what's registered in the Github OAuth App.
+        """
+        return settings.GITHUB_OAUTH_REDIRECT_URI
+
+    def get_authorization_url(self) -> Tuple[str, str]:
+        """
+        Generate Github authorization URL and state parameter.
+
+        Returns:
+            Tuple[str, str]: (authorization_url, state)
+        """
+        try:
+            redirect_uri = self._get_redirect_uri()
+            state = secrets.token_urlsafe(16)
+
+            params = {
+                "client_id": self._credential.client_id,
+                "redirect_uri": redirect_uri,
+                "scope": " ".join(self.SCOPES),
+                "state": state,
+            }
+            authorization_url = (
+                f"{self.GITHUB_AUTH_URL}?{urllib.parse.urlencode(params)}"
+            )
+
+            logger.info(
+                f"Generated Github authorization URL for redirect_uri: {redirect_uri}"
+            )
+            return authorization_url, state
+
+        except Exception as exc:
+            logger.error(f"Failed to generate authorization URL: {exc}")
+            raise ApplicationError(
+                f"Failed to generate authorization URL: {exc}"
+            ) from exc
+
+    def get_token(self, *, code: str, state: str) -> GithubAccessToken:
+        """
+        Exchange authorization code for an access token.
+
+        Args:
+            code: Authorization code from Github
+            state: State parameter for CSRF protection
+
+        Returns:
+            GithubAccessToken: Container with access token
+        """
+        try:
+            redirect_uri = self._get_redirect_uri()
+
+            data = {
+                "client_id": self._credential.client_id,
+                "client_secret": self._credential.client_secret,
+                "code": code,
+                "redirect_uri": redirect_uri,
+            }
+            headers = {"Accept": "application/json"}
+
+            response = requests.post(
+                self.GITHUB_ACCESS_TOKEN_OBTAIN_URL,
+                data=data,
+                headers=headers,
+                timeout=30,
+            )
+            response.raise_for_status()
+
+            token_resp = response.json()
+
+            if "access_token" not in token_resp:
+                raise ApplicationError("Invalid token response from Github")
+
+            logger.info("Successfully obtained access token from Github")
+            return GithubAccessToken(
+                access_token=token_resp["access_token"],
+            )
+
+        except requests.RequestException as exc:
+            logger.error(f"Failed to obtain token from Github: {exc}")
+            raise ApplicationError(
+                f"Failed to obtain token from Github: {exc}"
+            ) from exc
+
+    def get_user_info(self, *, github_token: GithubAccessToken) -> OauthUserData:
+        """
+        Retrieve user information using access token.
+
+        Args:
+            github_token: GithubAccessToken instance
+
+        Returns:
+            OauthUserData: User information from Github
+        """
+        if not github_token.access_token:
+            raise ApplicationError("Access token is required")
+
+        headers = {
+            "Authorization": f"Bearer {github_token.access_token}",
+            "Accept": "application/vnd.github.v3+json",
+        }
+
+        try:
+            # Get user profile
+            user_response = requests.get(
+                self.GITHUB_USER_INFO_URL, headers=headers, timeout=30
+            )
+            user_response.raise_for_status()
+            user_info = user_response.json()
+
+            # Get user emails
+            emails_response = requests.get(
+                self.GITHUB_USER_EMAILS_URL, headers=headers, timeout=30
+            )
+            emails_response.raise_for_status()
+            emails = emails_response.json()
+
+            # Find primary email
+            primary_email = next(
+                (email["email"] for email in emails if email["primary"]), None
+            )
+
+            # If no primary, take the first verified one
+            if not primary_email:
+                primary_email = next(
+                    (email["email"] for email in emails if email["verified"]), None
+                )
+
+            # If still no email, use the one from user profile if available
+            if not primary_email and "email" in user_info and user_info["email"]:
+                primary_email = user_info["email"]
+            elif not primary_email and emails:
+                # Fallback to the first email if any
+                primary_email = emails[0]["email"]
+
+            if not primary_email:
+                raise ApplicationError("Could not retrieve email from Github.")
+
+            full_name = user_info.get("name") or user_info.get("login", "")
+            profile_pic_url = user_info.get("avatar_url", "")
+
+            logger.info(f"Successfully retrieved user info for user: {primary_email}")
+
+            return OauthUserData(
+                email=primary_email,
+                full_name=full_name,
+                profile_pic_url=profile_pic_url,
+            )
+
+        except requests.RequestException as exc:
+            logger.error(f"Failed to retrieve user info from Github: {exc}")
+            raise ApplicationError(
+                f"Failed to retrieve user info from Github: {exc}"
+            ) from exc
