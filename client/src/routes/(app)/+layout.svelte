@@ -14,6 +14,7 @@
 
 	// Edit Popup State
 	let isEditPopupOpen = $state(false);
+	let isSidebar = $state(false);
 	let editingConvDetails: { id: string; title: string } | null = $state(null);
 	let deleteConvId: string | null = $state(null);
 	let editedConvTitle = $state('');
@@ -115,16 +116,42 @@
 >
 	<!-- Collapsible Sidebar -->
 	<aside
-		class="group/sidebar pt-4 w-16 fixed left-0 top-0 z-10 flex h-full flex-col bg-[var(--bg-secondary)] backdrop-blur-lg border-r border-[var(--border-primary)] transition-all duration-300 ease-in-out hover:w-64"
+		class=" pt-4 {isSidebar
+			? 'w-64'
+			: 'w-16'} fixed left-0 top-0 z-10 flex h-full flex-col bg-[var(--bg-secondary)] backdrop-blur-lg border-r border-[var(--border-primary)] transition-all duration-300 ease-in-out"
 	>
 		<div class="flex h-16 items-center rounded-lg overflow-hidden transition-all duration-300 p-2">
-			<div class="h-10 w-12 flex items-center justify-center flex-shrink-0">
-				<img src={icon} alt="" class="w-8 h-8 object-contain" />
+			<div class="group/icon h-10 w-12 flex items-center justify-center flex-shrink-0">
+				<img
+					src={icon}
+					class="{isSidebar ? '' : 'group-hover/icon:hidden'} w-8 h-8 object-contain"
+					alt=""
+				/>
+				{#if !isSidebar}
+					<button
+						class="w-8 h-auto aspect-square group-hover/icon:flex hidden justify-center items-center text-xl cursor-e-resize opacity-80"
+						onclick={() => (isSidebar = true)}
+						aria-label="Close nav"
+					>
+						<i class="ri-layout-right-line"></i>
+					</button>
+				{/if}
 			</div>
-			<span
-				class="ml-1 text-lg font-bold whitespace-nowrap opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300"
-				>AskPDF</span
-			>
+			{#if isSidebar}
+				<div class="pl-1 flex grow items-center justify-between">
+					<span
+						class=" text-lg font-bold whitespace-nowrap opacity-100 transition-opacity duration-300"
+						>AskPDF</span
+					>
+					<button
+						class="w-auto h-10 aspect-square text-xl cursor-w-resize opacity-80"
+						onclick={() => (isSidebar = false)}
+						aria-label="Close Nav"
+					>
+						<i class="ri-layout-left-line"></i></button
+					>
+				</div>
+			{/if}
 		</div>
 
 		<nav
@@ -139,43 +166,48 @@
 				<div class="h-10 w-12 flex items-center justify-center flex-shrink-0">
 					<i class="ri-add-fill text-lg"></i>
 				</div>
-				<span
-					class="ml-1 text-sm font-semibold whitespace-nowrap opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300"
-					>New Chat</span
-				>
+				{#if isSidebar}
+					<span
+						class="ml-1 text-sm font-semibold whitespace-nowrap opacity-100 transition-opacity duration-300"
+						>New Chat</span
+					>
+				{/if}
 			</a>
 
 			<!-- History Section -->
-			<div class="flex flex-col grow pt-4 min-h-0">
-				<h3
-					class="px-2 text-xs font-semibold uppercase text-[var(--text-muted)] opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300"
-				>
-					History
-				</h3>
-				{#if isLoading}
-					<ul class="mt-2 space-y-1 animate-pulse">
-						<li>
-							<p class="w-full h-6 mt-3 block truncate rounded-lg bg-[var(--bg-primary)]"></p>
-						</li>
-						<li>
-							<p class="w-full h-6 mt-2 block truncate rounded-lg bg-[var(--bg-primary)]"></p>
-						</li>
-					</ul>
-				{:else}
-					<ul
-						class="mt-2 flex flex-col grow overflow-y-auto space-y-1 opacity-0 pointer-events-none group-hover/sidebar:opacity-100 group-hover/sidebar:pointer-events-auto transition-opacity duration-300"
+
+			{#if isSidebar}
+				<div class="flex flex-col grow pt-4 min-h-0">
+					<h3
+						class="px-2 text-xs font-semibold uppercase text-[var(--text-muted)] opacity-100 transition-opacity duration-300"
 					>
-						{#each Array.from($conversations.values()) as conversation}
-							<Conversation
-								convId={conversation.id}
-								convTitle={conversation.title}
-								onEdit={openEditPopup}
-								onDelete={openDeletePopup}
-							/>
-						{/each}
-					</ul>
-				{/if}
-			</div>
+						History
+					</h3>
+					{#if isLoading}
+						<ul class="mt-2 space-y-1 animate-pulse">
+							<li>
+								<p class="w-full h-6 mt-3 block truncate rounded-lg bg-[var(--bg-primary)]"></p>
+							</li>
+							<li>
+								<p class="w-full h-6 mt-2 block truncate rounded-lg bg-[var(--bg-primary)]"></p>
+							</li>
+						</ul>
+					{:else}
+						<ul
+							class="mt-2 flex flex-col grow overflow-y-auto space-y-1 opacity-0 pointer-events-none group-hover/sidebar:opacity-100 group-hover/sidebar:pointer-events-auto transition-opacity duration-300"
+						>
+							{#each Array.from($conversations.values()) as conversation}
+								<Conversation
+									convId={conversation.id}
+									convTitle={conversation.title}
+									onEdit={openEditPopup}
+									onDelete={openDeletePopup}
+								/>
+							{/each}
+						</ul>
+					{/if}
+				</div>
+			{/if}
 		</nav>
 
 		<!-- Bottom Section: Theme Toggle & User -->
@@ -192,11 +224,14 @@
 						<i class="ri-sun-line"></i>
 					{/if}
 				</div>
-				<span
-					class="ml-1 text-sm font-semibold whitespace-nowrap opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300"
-				>
-					{isDarkMode ? 'Light Mode' : 'Dark Mode'}
-				</span>
+
+				{#if isSidebar}
+					<span
+						class="ml-1 text-sm font-semibold whitespace-nowrap opacity-100 transition-opacity duration-300"
+					>
+						{isDarkMode ? 'Light Mode' : 'Dark Mode'}
+					</span>
+				{/if}
 			</button>
 
 			<div
@@ -213,10 +248,13 @@
 							/>
 						</div>
 					</div>
-					<span
-						class="ml-1 text-sm font-semibold whitespace-nowrap opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-300"
-						>{$user.fullName}</span
-					>
+
+					{#if isSidebar}
+						<span
+							class="ml-1 text-sm font-semibold whitespace-nowrap opacity-100 transition-opacity duration-300"
+							>{$user.fullName}</span
+						>
+					{/if}
 				{:else}
 					<a href="/auth/login" class="h-full w-full flex items-center">
 						<div class="h-10 w-12 flex items-center justify-center flex-shrink-0">
