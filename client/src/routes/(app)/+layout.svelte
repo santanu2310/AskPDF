@@ -50,7 +50,6 @@
 			return;
 		}
 		await syncConversations();
-		console.log($conversations);
 		isLoading = false;
 	});
 
@@ -131,7 +130,7 @@
 					<button
 						class="w-8 h-auto aspect-square group-hover/icon:flex hidden justify-center items-center text-xl cursor-e-resize opacity-80"
 						onclick={() => (isSidebar = true)}
-						aria-label="Close nav"
+						aria-label="Open nav"
 					>
 						<i class="ri-layout-right-line"></i>
 					</button>
@@ -194,7 +193,7 @@
 						</ul>
 					{:else}
 						<ul
-							class="mt-2 flex flex-col grow overflow-y-auto space-y-1 opacity-0 pointer-events-none group-hover/sidebar:opacity-100 group-hover/sidebar:pointer-events-auto transition-opacity duration-300"
+							class="mt-2 flex flex-col grow overflow-y-auto space-y-1 transition-opacity duration-300"
 						>
 							{#each Array.from($conversations.values()) as conversation}
 								<Conversation
