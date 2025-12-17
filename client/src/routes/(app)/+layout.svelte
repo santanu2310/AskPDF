@@ -2,8 +2,9 @@
 	import { onMount } from 'svelte';
 	import { user } from '$lib/store/user';
 	import { goto } from '$app/navigation';
+	import { page } from '$app/state';
 	import icon from '$lib/assets/icon.png';
-	import { conversations } from '$lib/store/conversation';
+	import { conversations, currentConversation } from '$lib/store/conversation';
 	import { syncConversations } from '$lib/services/conversation';
 	import { changeConvTitle, deleteConversation } from '$lib/services/conversation';
 	import Conversation from '$lib/components/Conversation.svelte';
@@ -11,6 +12,8 @@
 	// Theme state. Defaults to false (light mode).
 	let isDarkMode = $state(false);
 	let isLoading = $state(true);
+
+	let chatTitle = $state<string | undefined>(undefined);
 
 	// Edit Popup State
 	let isEditPopupOpen = $state(false);
@@ -51,6 +54,15 @@
 		}
 		await syncConversations();
 		isLoading = false;
+	});
+
+	$effect(() => {
+		let chatId = page.params.chatId;
+		if (chatId == 'new' || chatId == undefined) {
+			chatTitle = undefined;
+		} else {
+			chatTitle = $conversations.get(chatId)?.title;
+		}
 	});
 
 	// --- Theme Management ---
@@ -117,7 +129,7 @@
 	<aside
 		class=" pt-4 {isSidebar
 			? 'w-64'
-			: 'w-16'} fixed left-0 top-0 z-10 flex h-full flex-col bg-[var(--bg-secondary)] backdrop-blur-lg border-r border-[var(--border-primary)] transition-all duration-300 ease-in-out"
+			: 'lg:w-16'} w-0 fixed left-0 top-0 z-10 flex h-full flex-col bg-[var(--bg-secondary)] backdrop-blur-lg border-r border-[var(--border-primary)] transition-all duration-300 ease-in-out"
 	>
 		<div class="flex h-16 items-center rounded-lg overflow-hidden transition-all duration-300 p-2">
 			<div class="group/icon h-10 w-12 flex items-center justify-center flex-shrink-0">
@@ -145,6 +157,7 @@
 					<button
 						class="w-auto h-10 aspect-square text-xl cursor-w-resize opacity-80"
 						onclick={() => (isSidebar = false)}
+						ontouchend={() => (isSidebar = false)}
 						aria-label="Close Nav"
 					>
 						<i class="ri-layout-left-line"></i></button
@@ -160,6 +173,9 @@
 			<!-- New Chat Button -->
 			<a
 				href="/"
+				onclick={() => {
+					isSidebar = false;
+				}}
 				class="flex h-10 items-center rounded-lg overflow-hidden hover:bg-[var(--bg-primary)] text-[var(--text-secondary)] transition-all duration-300"
 			>
 				<div class="h-10 w-12 flex items-center justify-center flex-shrink-0">
@@ -201,6 +217,7 @@
 									convTitle={conversation.title}
 									onEdit={openEditPopup}
 									onDelete={openDeletePopup}
+									onConvSelect={() => (isSidebar = false)}
 								/>
 							{/each}
 						</ul>
@@ -283,8 +300,41 @@
 	</aside>
 
 	<!-- Main Content -->
-	<main class="flex-1 ml-16 transition-all duration-300 ease-in-out">
-		<div class="relative flex h-full flex-col items-center justify-center w-full">
+	<main class="flex h-full flex-col flex-1 lg:ml-16 transition-all duration-300 ease-in-out">
+		<div class="w-full min-h-14 flex justify-between py-2 px-3 lg:hidden">
+			<button
+				class="h-full w-auto aspect-square rounded-lg text-lg"
+				aria-label="open nav on movbile"
+				ontouchend={() => (isSidebar = true)}
+				onclick={() => (isSidebar = true)}
+			>
+				<svg
+					width="24"
+					height="24"
+					viewBox="0 0 20 20"
+					fill="currentColor"
+					xmlns="http://www.w3.org/2000/svg"
+					data-rtl-flip=""
+					class="text-token-text-secondary icon-lg mx-2"
+					><path
+						d="M11.6663 12.6686L11.801 12.6823C12.1038 12.7445 12.3313 13.0125 12.3313 13.3337C12.3311 13.6547 12.1038 13.9229 11.801 13.985L11.6663 13.9987H3.33325C2.96609 13.9987 2.66839 13.7008 2.66821 13.3337C2.66821 12.9664 2.96598 12.6686 3.33325 12.6686H11.6663ZM16.6663 6.00163L16.801 6.0153C17.1038 6.07747 17.3313 6.34546 17.3313 6.66667C17.3313 6.98788 17.1038 7.25586 16.801 7.31803L16.6663 7.33171H3.33325C2.96598 7.33171 2.66821 7.03394 2.66821 6.66667C2.66821 6.2994 2.96598 6.00163 3.33325 6.00163H16.6663Z"
+					></path></svg
+				>
+			</button>
+
+			{#if chatTitle}
+				<div class="flex flex-grow justify-center items-center">
+					<div class="flex rounded-full w-38 items-center justify-between">
+						<span
+							class="text-base font-medium whitespace-nowrap overflow-hidden text-ellipsis max-w-[80%]"
+							>{chatTitle}</span
+						>
+						<span class="mx-1"><i class="ri-arrow-down-s-line"></i></span>
+					</div>
+				</div>
+			{/if}
+		</div>
+		<div class="relative flex flex-grow flex-col w-full min-h-0">
 			<!-- Child content will be rendered here -->
 			<slot></slot>
 		</div>

@@ -1,11 +1,14 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
+
 	interface Props {
 		convId: string;
 		convTitle: string;
 		onEdit: (details: { id: string; title: string }) => void;
 		onDelete: (id: string) => void;
+		onConvSelect: () => void;
 	}
-	let { convId, convTitle, onEdit, onDelete }: Props = $props();
+	let { convId, convTitle, onEdit, onDelete, onConvSelect }: Props = $props();
 
 	let menuContainer: HTMLElement;
 	let isMenuOpen = $state(false);
@@ -19,12 +22,24 @@
 			close();
 		}
 	}
+
+	function handleConversationClick(event: MouseEvent) {
+		event.preventDefault();
+		if (onConvSelect) {
+			onConvSelect();
+		}
+		goto(`/chat/${convId}`);
+	}
 </script>
 
 <svelte:window on:click={handleClickOutside} />
 
 <li class="group w-full flex items-center justify-between rounded-lg hover:bg-[var(--bg-primary)]">
-	<a href="/chat/{convId}" class="truncate p-2 text-sm text-[var(--text-secondary)] flex-grow">
+	<a
+		href="/chat/{convId}"
+		onclick={handleConversationClick}
+		class="truncate p-2 text-sm text-[var(--text-secondary)] flex-grow"
+	>
 		{convTitle}
 	</a>
 

@@ -26,6 +26,9 @@
 	let error = $state<boolean | null>(false);
 	let firstMessage = false;
 
+	let isSmallScreen = $state(false);
+	let currentView: 'pdf' | 'chat' = $state('pdf');
+
 	const conversation = $derived(chatId ? $conversations.get(chatId) : undefined);
 	let messages: Message[] = $derived(conversation?.messages ?? []);
 
@@ -44,7 +47,9 @@
 	};
 
 	$effect(() => {
-		documentId = conversation?.documents[0].id as string;
+		if (conversation?.documents?.[0]?.id) {
+			documentId = conversation.documents[0].id as string;
+		}
 	});
 
 	$effect(() => {
@@ -58,6 +63,21 @@
 			currentConversation.set(chatId);
 			fetchUpdates(chatId);
 		}
+	});
+
+	onMount(() => {
+		const handleResize = () => {
+			if (typeof window !== 'undefined') {
+				isSmallScreen = window.innerWidth < 900;
+			}
+		};
+
+		handleResize();
+		window.addEventListener('resize', handleResize);
+
+		return () => {
+			window.removeEventListener('resize', handleResize);
+		};
 	});
 
 	async function scrollToBottom() {
@@ -134,9 +154,35 @@
 	}
 </script>
 
-<div class="flex h-screen w-full text-[var(--text-primary)] font-sans">
+{#if isSmallScreen}
+	<div
+		class="fixed bottom-30 right-5 bg-[var(--bg-primary)] z-10 rounded-full overflow-hidden border-b border-[var(--border-primary)]"
+	>
+		<button
+			class="w-10 h-10 flex items-center justify-center {currentView === 'pdf' ? 'hidden' : ''}"
+			aria-label="switch pdf"
+			onclick={() => (currentView = 'pdf')}
+		>
+			<i class="ri-file-text-fill"></i>
+		</button>
+		<button
+			class="w-10 h-10 flex items-center justify-center {currentView === 'chat' ? 'hidden' : ''}"
+			aria-label="switch chat"
+			onclick={() => (currentView = 'chat')}
+		>
+			<i class="ri-chat-ai-fill"></i>
+		</button>
+	</div>
+{/if}
+
+<div class="flex h-full w-full text-[var(--text-primary)] font-sans">
 	<!-- Left Side: PDF Viewer -->
-	<div class="w-1/2 h-fulli p-5">
+	<div
+		class="h-full p-2 md:p-5 {!isSmallScreen ? 'w-1/2' : 'w-full'} {isSmallScreen &&
+		currentView !== 'pdf'
+			? 'hidden'
+			: ''}"
+	>
 		{#if documentId}
 			<div class="h-full w-full overflow-hidden rounded-xl">
 				<DocumentViewer {documentId} {isTemp} />
@@ -149,26 +195,31 @@
 	</div>
 
 	<!-- Right Side: Chat Interface -->
-	<div class="w-1/2 flex flex-1 flex-col h-screen">
+	<div
+		class="flex flex-1 flex-col h-full {!isSmallScreen ? 'w-1/2' : 'w-full'} {isSmallScreen &&
+		currentView !== 'chat'
+			? 'hidden'
+			: ''}"
+	>
 		<!-- Chat Header -->
-		<header class="flex h-16 items-center px-6">
+		<header class="flex h-16 items-center px-6 {isSmallScreen ? 'hidden' : ''}">
 			<h1 class="text-lg font-semibold">Ask PDF</h1>
 		</header>
 
 		<!-- Message Container -->
 		<div
 			bind:this={chatContainer}
-			class="w-full flex-grow p-6 space-y-6 overflow-y-scroll overflow-x-hidden scroll-smooth"
+			class="w-full flex-grow p-2 md:p-6 space-y-6 overflow-y-scroll overflow-x-hidden scroll-smooth"
 		>
 			{#each messages as message (message.id)}
 				{#if message.role === 'assistant'}
-					<div class="w-full pr-5 flex items-start gap-3">
+					<div class="w-full pr-1 md:pr-5 flex items-start gap-3">
 						<div
 							class="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-[var(--primary)] text-xl"
 						>
 							<i class="ri-gemini-fill"></i>
 						</div>
-						<div class="w-full rounded-xl rounded-tl-none text-base leading-7">
+						<div class="w-full rounded-xl rounded-tl-none text-base lg:leading-7">
 							{@html marked.parse(message.text)}
 						</div>
 					</div>
