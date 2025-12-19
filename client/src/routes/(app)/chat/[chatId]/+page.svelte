@@ -6,6 +6,7 @@
 	import { page } from '$app/state';
 	import { uploadedDocumentId } from '$lib/store/document';
 	import DocumentViewer from '$lib/components/DocumentViewer.svelte';
+	import ChatInput from '$lib/components/ChatInput.svelte';
 	import type { Message, Conversation, MessageResponse } from '$lib/types/conversation';
 	import { sendMessage, updateConversation } from '$lib/services/conversation';
 	import {
@@ -94,13 +95,8 @@
 	 * - Updates the conversation in the store and IndexedDB based on whether it's a new conversation or an existing one.
 	 * - Scrolls the chat to the bottom after sending the message.
 	 */
-	async function handleSendMessage() {
-		if (!query) {
-			const trimmedInput = userInput.trim();
-			if (!trimmedInput) return;
-			query = trimmedInput;
-		}
-
+	async function handleSendMessage(text: string): Promise<Error | void> {
+		query = text;
 		error = false;
 		userInput = '';
 
@@ -143,13 +139,14 @@
 			error = true;
 		} finally {
 			scrollToBottom();
+			return;
 		}
 	}
-
-	async function handleKeydown(e: KeyboardEvent) {
-		if (e.key === 'Enter' && !e.shiftKey) {
-			e.preventDefault();
-			await handleSendMessage();
+	async function _sendMessage() {
+		if (!query) {
+			const trimmedInput = userInput.trim();
+			if (!trimmedInput) return;
+			await handleSendMessage(trimmedInput);
 		}
 	}
 </script>
@@ -254,7 +251,7 @@
 							>
 							<button
 								class="w-20 h-9 text-sm flex cursor-pointer items-center justify-center ml-5 bg-[var(--bg-primary)] rounded-full text-[var(--text-primary)] font-medium border border-[var(--border-secondary)]"
-								onclick={handleSendMessage}
+								onclick={_sendMessage}
 							>
 								<svg
 									xmlns="http://www.w3.org/2000/svg"
@@ -314,33 +311,7 @@
 				style="box-shadow:0 2px 8px -2px color(from var(--gradient-accent) srgb r
 				g b/.16)"
 			>
-				<textarea
-					bind:value={userInput}
-					onkeydown={handleKeydown}
-					rows="3"
-					placeholder="Ask a question about the PDF..."
-					class="w-full outline-none border-none resize-none bg-[var(--bg-primary)] p-3 pr-12 text-sm"
-				></textarea>
-				<button
-					onclick={handleSendMessage}
-					aria-label="Send message"
-					class="absolute bottom-2.5 right-2.5 flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--primary)] text-white hover:opacity-90 disabled:opacity-50"
-					disabled={!userInput.trim()}
-				>
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						height="50%"
-						width="50%"
-						class="ml-[2px]"
-						viewBox="0 0 20 20"
-						fill="currentColor"
-						transform="rotate(90)"
-					>
-						<path
-							d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"
-						/>
-					</svg>
-				</button>
+				<ChatInput _sendMesage={handleSendMessage} />
 			</div>
 		</div>
 	</div>
