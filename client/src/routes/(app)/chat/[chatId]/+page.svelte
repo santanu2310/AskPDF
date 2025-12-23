@@ -199,9 +199,9 @@
 			: ''}"
 	>
 		<!-- Chat Header -->
-		<header class="flex h-16 items-center px-6 {isSmallScreen ? 'hidden' : ''}">
-			<h1 class="text-lg font-semibold">Ask PDF</h1>
-		</header>
+		<div class="min-h-16 items-center px-6 lg:flex hidden">
+			<h4 class="text-lg font-medium">{conversation?.title}</h4>
+		</div>
 
 		<!-- Message Container -->
 		<div

@@ -43,7 +43,7 @@
 		{convTitle}
 	</a>
 
-	<div class="relative flex-shrink-0" bind:this={menuContainer}>
+	<div class="relative flex-shrink-0 hidden md:flex" bind:this={menuContainer}>
 		<button
 			aria-label="More options"
 			class="w-auto h-7 m-1 aspect-square items-center justify-center rounded-md hover:bg-[var(--bg-secondary)] {isMenuOpen

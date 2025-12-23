@@ -56,7 +56,7 @@
 
 	/* Gradient Colors */
 	--gradient-accent: #2294f247;
-	--gradient-transparent: rgba(255, 255, 255, 0);
+	--gradient-transparent: rgba(0, 0, 0, 0.3);
 
 	/* Focus Ring Colors */
 	--ring-primary: #16da8b; /* indigo-500 */

@@ -1,26 +1,22 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { user } from '$lib/store/user';
-	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import icon from '$lib/assets/icon.png';
-	import { conversations, currentConversation } from '$lib/store/conversation';
+	import { conversations } from '$lib/store/conversation';
 	import { syncConversations } from '$lib/services/conversation';
-	import { changeConvTitle, deleteConversation } from '$lib/services/conversation';
 	import Conversation from '$lib/components/Conversation.svelte';
+	import EditPopup from '$lib/components/EditPopup.svelte';
 
+	let editPopupInstance: EditPopup;
 	// Theme state. Defaults to false (light mode).
 	let isDarkMode = $state(false);
 	let isLoading = $state(true);
+	let isMenuOpen = $state(false);
 
 	let chatTitle = $state<string | undefined>(undefined);
-
-	// Edit Popup State
-	let isEditPopupOpen = $state(false);
+	let chatId = $state<string | undefined>(undefined);
 	let isSidebar = $state(false);
-	let editingConvDetails: { id: string; title: string } | null = $state(null);
-	let deleteConvId: string | null = $state(null);
-	let editedConvTitle = $state('');
 
 	// A reference to the menu container in Conversation.svelte. This will be null initially,
 	// and will be set when a Conversation component is mounted.
@@ -54,16 +50,23 @@
 		}
 		await syncConversations();
 		isLoading = false;
+		updateStateVariables();
 	});
 
 	$effect(() => {
-		let chatId = page.params.chatId;
-		if (chatId == 'new' || chatId == undefined) {
+		updateStateVariables();
+	});
+
+	function updateStateVariables() {
+		let convId = page.params.chatId;
+		if (convId == 'new' || convId == undefined) {
 			chatTitle = undefined;
 		} else {
-			chatTitle = $conversations.get(chatId)?.title;
+			let conversation = $conversations.get(convId);
+			chatTitle = conversation?.title;
+			chatId = convId;
 		}
-	});
+	}
 
 	// --- Theme Management ---
 	function updateThemeClass(isDark: boolean) {
@@ -81,45 +84,12 @@
 		localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
 	}
 
-	// --- Edit Popup Management ---
-	function openEditPopup(details: { id: string; title: string }) {
-		editingConvDetails = details;
-		editedConvTitle = details.title;
-		isEditPopupOpen = true;
-	}
-	function openDeletePopup(id: string) {
-		deleteConvId = id;
-		isEditPopupOpen = true;
-	}
-
-	function closeEditPopup() {
-		isEditPopupOpen = false;
-		deleteConvId = null;
-		editingConvDetails = null;
-	}
-
-	async function handleUpdateTitle() {
-		if (!editingConvDetails) return;
-		await changeConvTitle(editingConvDetails.id, editedConvTitle);
-		closeEditPopup();
-	}
-
-	async function handleDelete() {
-		if (!deleteConvId) return;
-		await deleteConversation(deleteConvId);
-		closeEditPopup();
-		goto('/');
-	}
-
-	function handleKeydown(event: KeyboardEvent) {
-		if (event.key === 'Escape' && isEditPopupOpen) {
-			closeEditPopup();
-		}
+	function closePopUp() {
+		isMenuOpen = false;
 	}
 </script>
 
-<svelte:window on:keydown={handleKeydown} />
-
+<EditPopup bind:this={editPopupInstance} />
 <div
 	class:dark={isDarkMode}
 	class="flex h-screen bg-[var(--bg-primary)] text-[var(--text-primary)]"
@@ -215,8 +185,8 @@
 								<Conversation
 									convId={conversation.id}
 									convTitle={conversation.title}
-									onEdit={openEditPopup}
-									onDelete={openDeletePopup}
+									onEdit={editPopupInstance.openEditPopup}
+									onDelete={editPopupInstance.openDeletePopup}
 									onConvSelect={() => (isSidebar = false)}
 								/>
 							{/each}
@@ -324,88 +294,88 @@
 
 			{#if chatTitle}
 				<div class="flex flex-grow justify-center items-center">
-					<div class="flex rounded-full w-38 items-center justify-between">
+					<button
+						class="flex rounded-full w-44 md:w-52 px-4 py-1 items-center justify-between cursor-pointer hover:bg-[var(--bg-secondary)]"
+						onclick={() => {
+							isMenuOpen = true;
+						}}
+					>
 						<span
 							class="text-base font-medium whitespace-nowrap overflow-hidden text-ellipsis max-w-[80%]"
 							>{chatTitle}</span
 						>
 						<span class="mx-1"><i class="ri-arrow-down-s-line"></i></span>
-					</div>
+					</button>
 				</div>
 			{/if}
 		</div>
+		{#if isMenuOpen && chatTitle != undefined && chatId != undefined}
+			<div
+				class="fixed w-full h-full z-50 top-0 bg-[var(--bg-secondary)] backdrop-blur-sm"
+				onclick={() => {
+					isMenuOpen = false;
+				}}
+				onkeydown={(e) => e.key === 'Enter' && closePopUp()}
+				role="button"
+				tabindex="0"
+				aria-label="Close popup"
+			>
+				<div
+					class="fixed w-full z-50 bottom-0 mt-1 bg-[var(--bg-primary)] text-[var(--text-secondary)] border border-[var(--border-primary)] rounded-md shadow-lg"
+					onclick={(e) => {
+						e.stopPropagation();
+					}}
+					onkeydown={(e) => e.key === 'Enter' && e.stopPropagation()}
+					role="button"
+					tabindex="0"
+					aria-label="Close popup"
+				>
+					<ul class="py-4">
+						<li>
+							<button
+								class="w-full text-left pl-4 py-3 text-sm hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)]"
+								onclick={() => {
+									// TODO: Implement Pin logic
+									console.log('Pinning conversation:', chatId);
+									closePopUp();
+								}}
+							>
+								<i class="ri-pushpin-line"></i> Pin
+							</button>
+						</li>
+						<li>
+							<button
+								class="w-full text-left pl-4 py-3 text-sm hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)]"
+								onclick={() => {
+									editPopupInstance.openEditPopup({
+										id: chatId,
+										title: chatTitle!
+									});
+									closePopUp();
+								}}
+							>
+								<i class="ri-pencil-line"></i> Edit
+							</button>
+						</li>
+						<li>
+							<button
+								class="w-full text-left pl-4 py-3 text-sm hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)]"
+								onclick={() => {
+									editPopupInstance.openDeletePopup(chatId);
+									closePopUp();
+								}}
+							>
+								<i class="ri-delete-bin-4-line"></i> Delete
+							</button>
+						</li>
+					</ul>
+				</div>
+			</div>
+		{/if}
+
 		<div class="relative flex flex-grow flex-col w-full min-h-0">
 			<!-- Child content will be rendered here -->
 			<slot></slot>
 		</div>
 	</main>
-
-	<!-- Edit Conversation Title Popup -->
-	{#if isEditPopupOpen}
-		<div
-			class="fixed inset-0 bg-[var(--bg-secondary)] backdrop-blur-lg flex items-center justify-center z-50"
-			onclick={closeEditPopup}
-			role="button"
-			tabindex="0"
-			onkeydown={(e) => {
-				if (e.key === 'Esc') closeEditPopup();
-			}}
-		>
-			<div
-				class="bg-[var(--bg-primary)] p-6 rounded-lg shadow-lg w-xl"
-				onclick={(e) => e.stopPropagation()}
-				role="button"
-				tabindex="0"
-				onkeydown={(e) => {}}
-			>
-				{#if editingConvDetails}
-					<h3 class="text-xl font-medium mb-12 text-[var(--text-primary)]">
-						Edit Conversation Title
-					</h3>
-					<input
-						type="text"
-						class="w-full p-3.5 mb-8 rounded-md text-base bg-[var(--bg-secondary)] text-[var(--text-primary)] border border-[var(--border-primary)] focus:outline-1 outline-[var(--gradient-accent)]"
-						bind:value={editedConvTitle}
-					/>
-					<div
-						class="flex justify-end space-x-2 text-sm font-semibold text-[var(--text-secondary)]"
-					>
-						<button
-							class="px-4 py-2 rounded-md hover:text-[var(--text-primary)]"
-							onclick={closeEditPopup}
-						>
-							Cancel
-						</button>
-						<button
-							class="px-4 py-2 rounded-md hover:text-[var(--text-primary)]"
-							onclick={handleUpdateTitle}
-						>
-							Update
-						</button>
-					</div>
-				{:else}
-					<h3 class="text-xl font-medium mb-10 text-[var(--text-primary)]">Delete chat?</h3>
-					<span class="mb-8 block text-sm font-normal"
-						>This will delete all the messages and the document associated with this conversation.</span
-					>
-					<div
-						class="flex justify-end space-x-2 text-sm font-semibold text-[var(--text-secondary)]"
-					>
-						<button
-							class="px-4 py-2 rounded-md hover:text-[var(--text-primary)]"
-							onclick={closeEditPopup}
-						>
-							Cancel
-						</button>
-						<button
-							class="px-4 py-2 rounded-md hover:text-[var(--text-primary)]"
-							onclick={handleDelete}
-						>
-							Delete
-						</button>
-					</div>
-				{/if}
-			</div>
-		</div>
-	{/if}
 </div>
