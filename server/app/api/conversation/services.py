@@ -9,7 +9,6 @@ from app.core.llm import LLMManager
 from app.core.exceptions import NotFoundError
 from app.api.document.crud import associate_document_with_conversation
 from app.api.document.services import delete_doc
-from app.core.exceptions import MessageProcessingError
 
 from .schemas import (
     MessagePayload,

@@ -72,6 +72,7 @@ async def get_conversation_by_id(
             Conversation.id == conversation_id,
             Conversation.user_id == user_id,
         )
+
         result = await db.execute(query)
         return result.scalar_one_or_none()
 
@@ -181,7 +182,7 @@ async def delete_conversation(
         conversation = await get_conversation_with_messages(
             db, conversation_id, user_id
         )
-        logger.error(f"{conversation=}")
+
         if not conversation:
             logger.warning(
                 f"Attempted to delete non-existent conversation with id {conversation_id}."
@@ -192,7 +193,6 @@ async def delete_conversation(
 
         await db.delete(conversation)
         await db.commit()
-        logger.info(f"Successfully deleted conversation {conversation_id}.")
         return conversation
 
     except SQLAlchemyError as e:
@@ -265,7 +265,9 @@ async def update_conversation_title(
             logger.warning(
                 f"Attempted to update non-existent conversation with id {conversation_id}."
             )
-            return None
+            raise NotFoundError(
+                message=f"Conversation id: {conversation_id} not found!"
+            )
 
         conversation.title = new_title
         await db.commit()
