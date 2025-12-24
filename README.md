@@ -2,7 +2,7 @@
 
 AskPDF is a Retrieval-Augmented Generation (RAG) system designed to process large documents (PDFs) and provide accurate, context-aware answers to user queries. By leveraging vector embeddings and Large Language Models (LLMs), it allows users to interact with their document repository naturally.
 
-![Project Screenshot](@docs/screenshot.webp)
+![Project Screenshot](docs/screenshot.webp)
 
 ## 🏗 System Architecture
 
@@ -14,12 +14,12 @@ The system is composed of three main microservices:
 ### File Ingestion Pipeline
 When a user uploads a file, it goes through a secure signed URL process directly to S3, triggering an event-driven processing pipeline.
 
-![File to Embedding Pipeline](@docs/file_to_embedding.png)
+![File to Embedding Pipeline](docs/file_to_embedding.png)
 
 ### Query & Response Flow
 User queries are processed to retrieve relevant document contexts from ChromaDB, which are then fed into the Gemini LLM to generate precise answers with citations.
 
-![RAG Message Flow](@docs/rag_message.png)
+![RAG Message Flow](docs/rag_message.png)
 
 ---
 
