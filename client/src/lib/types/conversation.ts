@@ -19,6 +19,7 @@ export interface Conversation {
 	title: string;
 	messages: Array<Message>;
 	documents: Array<DocumentObject>;
+	pinned: boolean;
 	createdAt: string;
 	updatedAt: string;
 }
@@ -40,6 +41,7 @@ export function mapConversation(serverConversation: any): Conversation {
 		title: serverConversation.title,
 		messages: serverConversation.messages?.map(mapMessage) || [],
 		documents: serverConversation.documents?.map(mapDcoumentResponse) || [],
+		pinned: false,
 		createdAt: serverConversation.created_at,
 		updatedAt: serverConversation.updated_at
 	};

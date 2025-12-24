@@ -1,14 +1,16 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { togglePinConv } from '$lib/services/conversation';
 
 	interface Props {
 		convId: string;
 		convTitle: string;
+		pinned: boolean;
 		onEdit: (details: { id: string; title: string }) => void;
 		onDelete: (id: string) => void;
 		onConvSelect: () => void;
 	}
-	let { convId, convTitle, onEdit, onDelete, onConvSelect }: Props = $props();
+	let { convId, convTitle, pinned, onEdit, onDelete, onConvSelect }: Props = $props();
 
 	let menuContainer: HTMLElement;
 	let isMenuOpen = $state(false);
@@ -43,6 +45,10 @@
 		{convTitle}
 	</a>
 
+	{#if pinned}
+		<i class="ri-pushpin-2-line mr-2.5 md:group-hover:hidden"></i>
+	{/if}
+
 	<div class="relative flex-shrink-0 hidden md:flex" bind:this={menuContainer}>
 		<button
 			aria-label="More options"
@@ -63,12 +69,15 @@
 						<button
 							class="w-full text-left pl-4 py-1.5 text-sm hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)]"
 							onclick={() => {
-								// TODO: Implement Pin logic
-								console.log('Pinning conversation:', convId);
+								togglePinConv(convId);
 								close();
 							}}
 						>
-							<i class="ri-pushpin-line"></i> Pin
+							{#if pinned}
+								<i class="ri-unpin-line"></i> unpin
+							{:else}
+								<i class="ri-pushpin-line"></i> Pin
+							{/if}
 						</button>
 					</li>
 					<li>

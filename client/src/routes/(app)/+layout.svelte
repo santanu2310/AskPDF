@@ -4,7 +4,7 @@
 	import { page } from '$app/state';
 	import icon from '$lib/assets/icon.png';
 	import { conversations } from '$lib/store/conversation';
-	import { syncConversations } from '$lib/services/conversation';
+	import { syncConversations, togglePinConv } from '$lib/services/conversation';
 	import Conversation from '$lib/components/Conversation.svelte';
 	import EditPopup from '$lib/components/EditPopup.svelte';
 
@@ -16,7 +16,12 @@
 
 	let chatTitle = $state<string | undefined>(undefined);
 	let chatId = $state<string | undefined>(undefined);
+	let pinned = $state(false);
 	let isSidebar = $state(false);
+
+	let conversationArray = $derived(Array.from($conversations.values()));
+	let pinnedConversations = $derived(conversationArray.filter((c) => c.pinned));
+	let unpinnedConversations = $derived(conversationArray.filter((c) => !c.pinned));
 
 	// A reference to the menu container in Conversation.svelte. This will be null initially,
 	// and will be set when a Conversation component is mounted.
@@ -65,6 +70,7 @@
 			let conversation = $conversations.get(convId);
 			chatTitle = conversation?.title;
 			chatId = convId;
+			pinned = conversation?.pinned ?? false;
 		}
 	}
 
@@ -181,10 +187,24 @@
 						<ul
 							class="mt-2 flex flex-col grow overflow-y-auto space-y-1 transition-opacity duration-300"
 						>
-							{#each Array.from($conversations.values()) as conversation}
+							{#each pinnedConversations as conversation}
 								<Conversation
 									convId={conversation.id}
 									convTitle={conversation.title}
+									pinned={conversation.pinned}
+									onEdit={editPopupInstance.openEditPopup}
+									onDelete={editPopupInstance.openDeletePopup}
+									onConvSelect={() => (isSidebar = false)}
+								/>
+							{/each}
+							{#if pinnedConversations.length > 0 && unpinnedConversations.length > 0}
+								<div class="h-px bg-[var(--border-primary)] mx-2 my-2"></div>
+							{/if}
+							{#each unpinnedConversations as conversation}
+								<Conversation
+									convId={conversation.id}
+									convTitle={conversation.title}
+									pinned={conversation.pinned}
 									onEdit={editPopupInstance.openEditPopup}
 									onDelete={editPopupInstance.openDeletePopup}
 									onConvSelect={() => (isSidebar = false)}
@@ -335,12 +355,15 @@
 							<button
 								class="w-full text-left pl-4 py-3 text-sm hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)]"
 								onclick={() => {
-									// TODO: Implement Pin logic
-									console.log('Pinning conversation:', chatId);
+									togglePinConv(chatId!);
 									closePopUp();
 								}}
 							>
-								<i class="ri-pushpin-line"></i> Pin
+								{#if pinned}
+									<i class="ri-unpin-line"></i> unpin
+								{:else}
+									<i class="ri-pushpin-line"></i> Pin
+								{/if}
 							</button>
 						</li>
 						<li>
@@ -348,7 +371,7 @@
 								class="w-full text-left pl-4 py-3 text-sm hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)]"
 								onclick={() => {
 									editPopupInstance.openEditPopup({
-										id: chatId,
+										id: chatId!,
 										title: chatTitle!
 									});
 									closePopUp();
@@ -361,7 +384,7 @@
 							<button
 								class="w-full text-left pl-4 py-3 text-sm hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)]"
 								onclick={() => {
-									editPopupInstance.openDeletePopup(chatId);
+									editPopupInstance.openDeletePopup(chatId!);
 									closePopUp();
 								}}
 							>

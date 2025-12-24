@@ -89,7 +89,7 @@
 				</div>
 			{:else}
 				<h3 class="text-xl font-medium mb-10 text-[var(--text-primary)]">Delete chat?</h3>
-				<span class="mb-8 block text-sm font-normal"
+				<span class="mb-8 block text-sm font-normal text-[var(--text-secondary)]"
 					>This will delete all the messages and the document associated with this conversation.</span
 				>
 				<div class="flex justify-end space-x-2 text-sm font-semibold text-[var(--text-secondary)]">

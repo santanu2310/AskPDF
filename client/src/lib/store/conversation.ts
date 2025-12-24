@@ -1,6 +1,5 @@
 import { writable, get } from 'svelte/store';
 import type { Conversation, Message } from '$lib/types/conversation';
-import { mapConversation, mapMessage } from '$lib/types/conversation';
 
 export const conversations = writable<Map<string, Conversation>>(new Map());
 export const currentConversation = writable<string | null>(null);

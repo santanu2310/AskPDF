@@ -53,9 +53,7 @@ export async function syncConversations(): Promise<Conversation[]> {
 		}
 	});
 
-	console.log('server response:', response.data);
 	const serverConversations = response.data.map(mapConversation) as Conversation[];
-	console.log('serverConversations', serverConversations);
 
 	// Merge server conversations with local ones, then update IndexedDB and the store
 	if (serverConversations.length > 0) {
@@ -71,8 +69,6 @@ export async function syncConversations(): Promise<Conversation[]> {
 			}
 			return serverConv;
 		});
-
-		console.log('conversationsToUpsert', conversationsToUpsert);
 
 		await indexedDbService.batchUpsert('conversation', conversationsToUpsert);
 		conversations.update((convsMap) => {
@@ -93,17 +89,14 @@ export async function updateConversation(conv_id: string, lastUpdated: string) {
 				last_updated: lastUpdated
 			}
 		});
-		console.log('response', response.data);
 
 		if (
 			response.data &&
 			response.data.messages.length > 0 &&
 			Object.keys(response.data).length > 0
 		) {
-			console.log('conversation response :', response.data);
 			const updatedConversation = mapConversation(response.data) as Conversation;
 
-			console.log('updatedConversation', updatedConversation);
 			await indexedDbService.updateRecord('conversation', updatedConversation);
 
 			conversations.update((convsMap) => {
@@ -119,7 +112,6 @@ export async function updateConversation(conv_id: string, lastUpdated: string) {
 export async function changeConvTitle(id: string, title: string): Promise<void> {
 	try {
 		const payload = { id, title };
-		console.log('payload : ', payload);
 		// const response = await authRequest.put(CONVERSATION_ENDPOINTS.GET_CHAT(id), payload);
 
 		const response = await authRequest({
@@ -127,7 +119,6 @@ export async function changeConvTitle(id: string, title: string): Promise<void> 
 			url: CONVERSATION_ENDPOINTS.GET_CHAT(id),
 			data: payload
 		});
-		console.log('updatedConversation for title update : ', response.data);
 
 		const conversationUpdate = mapConversation(response.data) as Conversation;
 
@@ -166,11 +157,7 @@ export async function changeConvTitle(id: string, title: string): Promise<void> 
 export async function deleteConversation(id: string): Promise<void> {
 	try {
 		const conversationToDelete = await indexedDbService.getRecord<Conversation>('conversation', id);
-
 		const response = await authRequest.delete(CONVERSATION_ENDPOINTS.GET_CHAT(id));
-
-		console.log('delete response:', response);
-		console.log('conversation to delete: ', conversationToDelete);
 
 		if (conversationToDelete && conversationToDelete.documents) {
 			try {
@@ -202,4 +189,22 @@ export async function deleteConversation(id: string): Promise<void> {
 		console.error(`Failed to delete conversation ${id}:`, error);
 		throw error;
 	}
+}
+
+export async function togglePinConv(id: string): Promise<void> {
+	const conversationData = (await indexedDbService.getRecord<Conversation>(
+		'conversation',
+		id
+	)) as Conversation;
+
+	if (conversationData.pinned) conversationData.pinned = false;
+	else conversationData.pinned = true;
+
+	await indexedDbService.updateRecord('conversation', conversationData);
+
+	conversations.update((convsMap) => {
+		convsMap.set(id, conversationData);
+		return new Map(convsMap);
+	});
+	return;
 }
