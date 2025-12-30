@@ -24,12 +24,18 @@ from .crud import (
     get_document_ids_by_conversation,
     update_conversation_title,
     delete_conversation,
+    get_messages_by_conversations,
 )
 from .rag import generate_augmented_response, generate_conversation_title
 from .models import Conversation
 
 
 logger = logging.getLogger(__name__)
+
+
+async def message_history(db: AsyncSession, conv_id: UUID) -> list[object]:
+    messages = await get_messages_by_conversations(db=db, conv_id=conv_id)
+    return [{"role": msg.role, "content": msg.content} for msg in reversed(messages)]
 
 
 async def handle_message(
@@ -70,12 +76,15 @@ async def handle_message(
         conv_id = conversation.id
         created_at_time = conversation.created_at
 
+    msg_history = await message_history(db=db, conv_id=conv_id)
+
     user_message = await create_message(
         db=db, conversation_id=str(conv_id), content=payload.message, role="user"
     )
 
     agent_response = await generate_augmented_response(
         query=payload.message,
+        chat_history=msg_history,
         embedder=embedder,
         store=store,
         llm=model_lg,

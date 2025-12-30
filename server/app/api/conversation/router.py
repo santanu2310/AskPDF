@@ -89,7 +89,6 @@ async def update_conversation_title(
     db: AsyncSession = Depends(get_db),
     user: UserAuthOut = Depends(get_id_from_access_token),
 ):
-    logger.error(f"title update data: {payload}")
     return await change_conv_title(data=payload, db=db, user=user)
 
 

@@ -83,8 +83,6 @@ class VectorStore:
                 else None,  # Pass the where_clause here
             )
 
-            logger.error(f"{results=}")
-
             return results
 
         except (KeyError, IndexError, ValueError) as e:

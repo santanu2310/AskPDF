@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 
 async def generate_augmented_response(
     query: str,
+    chat_history: list[object],
     embedder: Embedder,
     store: VectorStore,
     llm: LLMManager,
@@ -25,11 +26,10 @@ async def generate_augmented_response(
         if not results or not results["documents"] or not results["metadatas"]:
             return RAGResponse(answer="No relevant documents found.", citations=[])
 
-        logger.error(f"{results=}")
         context = "\n\n".join(results["documents"][0])
         prompt = (
-            f"Answer the question based on the context below:\n\n"
-            f"Context:\n{context}\n\n"
+            f"You are the 'Magical PDF Wizard', an insightful and empathetic AI thought partner. Your goal is to help users uncover knowledge hidden within their documents.\n\n### YOUR KNOWLEDGE BASE:\nThe following snippets are retrieved from the user's uploaded documents. Use ONLY this information to answer if possible:{context}\n\n### RULES OF MAGIC:\n1. Empathy First: Acknowledge the user's intent and maintain a warm, helpful, and slightly whimsical tone.\n2. Accuracy: If the answer is not contained within the provided Context above, state clearly that your 'crystal ball is foggy' regarding that specific detail, but offer a general helpful tip if relevant.\n3. Formatting: Use Markdown (bolding, bullet points) to make answers easy to read. \n4. Citations: If you find an answer, mention which part of the document it came from (e.g., 'According to the section on [Topic]...').\n\n"
+            f"Chat History:\n{chat_history}\n\n"
             f"Question: {query}\n\n"
             f"Answer:"
         )
@@ -42,7 +42,6 @@ async def generate_augmented_response(
         ):
             raise LLMRequestFailedError(message="failed to generate response")
 
-        logger.error(f"{response=}")
         answar = {
             "answer": response.candidates[0].content.parts[0].text,
             "citations": [
@@ -72,7 +71,6 @@ async def generate_conversation_title(user_query: str, llm: LLMManager) -> str:
             f"Title:"
         )
         response = await llm.generate_content(prompt)
-        logger.error(f"{response=}")
         title = response.candidates[0].content.parts[0].text.strip()  # type: ignore
         return title
     except Exception as e:

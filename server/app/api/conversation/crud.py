@@ -330,3 +330,41 @@ async def create_message(
         raise DatabaseError(
             f"Database error while creating message in conversation '{conversation_id}'."
         )
+
+
+async def get_messages_by_conversations(
+    db: AsyncSession, conv_id: UUID, count: int = 10
+) -> List[Message]:
+    """
+    Retrieves messages from a conversation of a given user, ordered by most recent and return the given count.
+
+    Args:
+        db: The AsyncSession instance.
+        user_id: The ID of the user whose conversations to retrieve.
+        conv_id: ID of the conversation.
+        count: No. of messages to return.
+
+    Returns:
+        A list of Message objects.
+
+    Raises:
+        DatabaseError: If the database query fails.
+    """
+    try:
+        # Assuming your BaseModel has a `created_at` timestamp
+        query = (
+            select(Message)
+            .where(Message.conversation_id == conv_id)
+            .order_by(Message.created_at.desc())
+            .limit(count)
+        )
+        result = await db.execute(query)
+        return list(result.scalars().all())
+
+    except SQLAlchemyError as e:
+        logger.error(
+            f"Failed to retrieve Messages for conversation {conv_id}. Error: {e}"
+        )
+        raise DatabaseError(
+            f"Database error while fetching messages for conversations '{conv_id}'."
+        )
